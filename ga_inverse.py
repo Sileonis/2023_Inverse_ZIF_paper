@@ -257,6 +257,12 @@ def represent_instances_as_genes(instances_dataframe: pd.DataFrame) -> np.array:
 def prepareGA(fitness, starting_population_data, **kwargs):
     fitness_function = fitness
 
+    # TODO: Replace all parameters with default values from pygad initializer
+    if 'random_seed' not in kwargs:
+        random_seed=None
+    else:
+        random_seed = kwargs['random_seed']
+
     if 'num_generations' not in kwargs:
         num_generations = 100
     else:
@@ -363,7 +369,7 @@ def prepareGA(fitness, starting_population_data, **kwargs):
                        # stop_criteria=["reach_127.4", "saturate_160"],
                        stop_criteria=stop_criteria,
                        save_solutions=True,
-                       random_seed=None,
+                       random_seed=random_seed,
                     #    parallel_processing=["thread", 20],
                     #    parallel_processing=["process", 8],
                        on_generation=on_generation,
