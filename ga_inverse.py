@@ -8,12 +8,6 @@ from typing import Callable
 # Learning
 from scipy.optimize import minimize
 from scipy.optimize import minimize_scalar
-#import models
-# from sklearn.linear_model import LinearRegression
-# from sklearn.neural_network import MLPRegressor
-# from sklearn.tree import DecisionTreeRegressor
-# from sklearn import linear_model
-# from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 
 # Data splitting
@@ -30,7 +24,7 @@ from tabulate import _table_formats, tabulate
 
 # Indexing
 # CURRENTLY Unimportant
-from rtree import index
+# from rtree import index
 
 # Search / optimization
 import pygad
