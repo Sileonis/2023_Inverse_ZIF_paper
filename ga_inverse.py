@@ -2,6 +2,9 @@
 import pandas as pd
 import numpy as np
 
+# Type hinting
+from typing import Callable
+
 # Learning
 from scipy.optimize import minimize
 from scipy.optimize import minimize_scalar
@@ -215,14 +218,14 @@ def get_whole_vector_per_gas_from_solution(solution, diameter_tuple, mass_tuple,
     return solution_gas1, solution_gas2
 
 
-def fitness(solution, solution_idx, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, boundaries_D, boundaries_R, 
-        model, customFitnessFormula : function[float, float] = None) -> float:
+def fitness_base(solution, solution_idx, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, boundaries_D, boundaries_R, 
+        model, customFitnessFormula : Callable[[float, float], float] = None) -> float:
     diameter_gas1, diameter_gas2 = diameter_tuple
     mass_gas1, mass_gas2 = mass_tuple
     ascF_gas1, ascF_gas2 = ascF_tuple
     kD_gas1, kD_gas2 = kD_tuple
         
-    solution2=get_base_vector_from_solution(solution)
+    # solution2=get_base_vector_from_solution(solution)
     
     solution_gas1, solution_gas2 = get_whole_vector_per_gas_from_solution(solution, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple)
     
@@ -243,13 +246,27 @@ def fitness(solution, solution_idx, diameter_tuple, mass_tuple, ascF_tuple, kD_t
     return overallFitnessMeasure
 
 
+#############
+# Field-related constants
+GENE_FIELDS = [
+        # 'diameter',
+        'MetalNum',  
+        'linker_length1', 'linker_length2', 'linker_length3',
+        'func1_length', 'func2_length', 'func3_length' 
+                                    ]
+#############
+
+def represent_instances_as_genes(instances_dataframe: pd.DataFrame) -> np.array:
+    return np.asanyarray(instances_dataframe[GENE_FIELDS])
+
+
 def prepareGA(fitness, starting_population_data, **kwargs):
     fitness_function = fitness
 
-    if not 'numgenerations' in kwargs == None:
+    if 'num_generations' not in kwargs:
         num_generations = 100
     else:
-        num_generations = kwargs['numgenerations']
+        num_generations = kwargs['num_generations']
     
     if 'num_parents_mating' not in kwargs:
         num_parents_mating = 6 # 20,  22  #number of solutions to be selected as parents    
@@ -267,12 +284,7 @@ def prepareGA(fitness, starting_population_data, **kwargs):
     else:
         mutation_type = kwargs['mutation_type']
 
-    Genes = np.asanyarray(starting_population_data[[
-        # 'diameter',
-        'MetalNum',  
-        'linker_length1', 'linker_length2', 'linker_length3',
-        'func1_length', 'func2_length', 'func3_length' 
-                                    ]])
+    Genes = np.asanyarray(starting_population_data[GENE_FIELDS])
 
     initial_population = Genes
 
@@ -367,6 +379,7 @@ def prepareGA(fitness, starting_population_data, **kwargs):
     return ga_instance
 
 def runGA(ga_instance):
+    """Returns the solution (as a gene), the related fitness and its index."""
 
     now = datetime.datetime.now()
     print ("Current date and time : ")
