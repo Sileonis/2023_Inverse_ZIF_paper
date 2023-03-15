@@ -416,7 +416,7 @@ def get_best_solutions(ga_instance):
     dfSol3 = dfSol2.reset_index()
     dfSol3 = dfSol3.drop(columns=['index'])
 
-    return dfSol3
+    return np.asanyarray(dfSol3) # TODO: Check
 
 def plot_results(ga_instance, solution_rate=True, fitness_per_generation = True, gene_plot=True):
     if solution_rate:
