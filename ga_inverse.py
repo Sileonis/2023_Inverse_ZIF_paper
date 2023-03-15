@@ -208,6 +208,14 @@ def get_whole_vector_per_gas_from_solution(solution, diameter_tuple, mass_tuple,
 
     return solution_gas1, solution_gas2
 
+def estimate_diffusivities_from_solution(solution, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, model):
+    solution_gas1, solution_gas2 = get_whole_vector_per_gas_from_solution(solution, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple)
+    
+    estimated_gas1_diffusivity  = model.predict([solution_gas1])[0]
+    estimated_gas2_diffusivity  = model.predict([solution_gas2])[0]
+
+    return estimated_gas1_diffusivity, estimated_gas2_diffusivity
+
 
 def fitness_base(solution, solution_idx, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, boundaries_D, boundaries_R, 
         model, customFitnessFormula : Callable[[float, float], float] = None) -> float:
@@ -216,12 +224,9 @@ def fitness_base(solution, solution_idx, diameter_tuple, mass_tuple, ascF_tuple,
     ascF_gas1, ascF_gas2 = ascF_tuple
     kD_gas1, kD_gas2 = kD_tuple
         
-    # solution2=get_base_vector_from_solution(solution)
-    
-    solution_gas1, solution_gas2 = get_whole_vector_per_gas_from_solution(solution, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple)
-    
-    estimated_gas1_diffusivity  = model.predict([solution_gas1])[0]
-    estimated_gas2_diffusivity  = model.predict([solution_gas2])[0]
+    estimated_gas1_diffusivity, estimated_gas2_diffusivity = estimate_diffusivities_from_solution(solution, 
+                                                                    diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, 
+                                                                    model)
 
     # If no fitness is defined
     if (customFitnessFormula == None):
@@ -251,7 +256,7 @@ def represent_instances_as_genes(instances_dataframe: pd.DataFrame) -> np.array:
     return np.asanyarray(instances_dataframe[GENE_FIELDS])
 
 
-def prepareGA(fitness, starting_population_data, **kwargs):
+def prepareGA(fitness, starting_population_data, suppress_warnings=False, **kwargs):
     fitness_function = fitness
 
     # TODO: Replace all parameters with default values from pygad initializer
@@ -370,7 +375,8 @@ def prepareGA(fitness, starting_population_data, **kwargs):
                     #    parallel_processing=["thread", 20],
                     #    parallel_processing=["process", 8],
                        on_generation=on_generation,
-                       save_best_solutions=True
+                       save_best_solutions=True,
+                       suppress_warnings=suppress_warnings
                       )
         
     return ga_instance
@@ -432,4 +438,55 @@ def plot_results(ga_instance, solution_rate=True, fitness_per_generation = True,
         print(ga_instance.plot_genes(graph_type="plot",
                         plot_type="scatter",
                         solutions='all'))
+
+
+def plot_logDvsRatio(dataForPlotting, gas1_name, gas2_name, save_to_file = False, filename = None):
+    plt.plot(dataForPlotting['logD'], dataForPlotting['Ratio'], 's', label='GA ZIFs', c='b', markersize='12', markeredgewidth=2, markeredgecolor='k')
+    plt.xlabel('log$D_{%s}$'%(gas1_name), fontsize=20)
+    plt.ylabel('selectivity (log($D_{%s}$ / $D_{%s}$)'%(gas1_name, gas2_name),fontsize=20)
+    plt.legend(loc='lower right', fontsize=20)
+
+
+    plt.tick_params(which='both', width=3)
+    plt.tick_params(which='major', length=10)
+    plt.rcParams["figure.figsize"] = (6,6)
+    plt.gca().xaxis.set_major_formatter(StrMethodFormatter('{x:,.1f}'))
+    plt.gca().yaxis.set_major_formatter(StrMethodFormatter('{x:,.1f}'))
+
+    plt.yticks(fontsize=16)
+    plt.xticks(fontsize=16)
+
+    # If asked to save
+    if save_to_file:
+        # If we do not have a filename
+        if filename is None:
+            # Create one
+            filename = 'performance_%s_%s.png'%(gas1_name, gas2_name)
+        plt.savefig(filename, bbox_inches='tight', dpi=300, transparent=True)
+    
+    plt.show()
+
+def plot_fitnessPerMOF(dataForPlotting, gas1_name, gas2_name, save_to_file = False, filename = None):
+    plt.plot(dataForPlotting['number'], dataForPlotting['fitness'], 's', label='GA ZIFs', c='b', markersize='18', markeredgewidth=1, markeredgecolor='k')
+    plt.xlabel('# of candidate', fontsize=20)
+    plt.ylabel('fitness',fontsize=20)
+    plt.legend(loc='lower right', fontsize=20)
+
+
+    plt.tick_params(which='both', width=3)
+    plt.tick_params(which='major', length=10)
+    plt.rcParams["figure.figsize"] = (6,6)
+    plt.gca().xaxis.set_major_formatter(StrMethodFormatter('{x:,.0f}'))
+
+    plt.yticks(fontsize=20)
+    plt.xticks(fontsize=20)
+
+    # If asked to save
+    if save_to_file:
+        # If we do not have a filename
+        if filename is None:
+            # Create one
+            filename = 'fitness_%s_%s.png'%(gas1_name, gas2_name)
+        plt.savefig(filename, bbox_inches='tight', dpi=300, transparent=True)
+    plt.show()
 
