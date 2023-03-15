@@ -440,8 +440,9 @@ def plot_results(ga_instance, solution_rate=True, fitness_per_generation = True,
                         solutions='all'))
 
 
-def plot_logDvsRatio(dataForPlotting, gas1_name, gas2_name, save_to_file = False, filename = None):
-    plt.plot(dataForPlotting['logD'], dataForPlotting['Ratio'], 's', label='GA ZIFs', c='b', markersize='12', markeredgewidth=2, markeredgecolor='k')
+def plot_logDvsRatio(dataForPlotting, gas1_name, gas2_name, logD_field_name = 'logD', ratio_field_name = 'Ratio', 
+                     save_to_file = False, filename = None):
+    plt.plot(dataForPlotting[logD_field_name], dataForPlotting[ratio_field_name], 's', label='GA ZIFs', c='b', markersize='12', markeredgewidth=2, markeredgecolor='k')
     plt.xlabel('log$D_{%s}$'%(gas1_name), fontsize=20)
     plt.ylabel('selectivity (log($D_{%s}$ / $D_{%s}$)'%(gas1_name, gas2_name),fontsize=20)
     plt.legend(loc='lower right', fontsize=20)
@@ -466,8 +467,9 @@ def plot_logDvsRatio(dataForPlotting, gas1_name, gas2_name, save_to_file = False
     
     plt.show()
 
-def plot_fitnessPerMOF(dataForPlotting, gas1_name, gas2_name, save_to_file = False, filename = None):
-    plt.plot(dataForPlotting['number'], dataForPlotting['fitness'], 's', label='GA ZIFs', c='b', markersize='18', markeredgewidth=1, markeredgecolor='k')
+def plot_fitnessPerMOF(dataForPlotting, gas1_name, gas2_name, id_field_name = 'MOF_ID', fitness_field_name = 'fitness',
+                        save_to_file = False, filename = None):
+    plt.plot(dataForPlotting[id_field_name], dataForPlotting[fitness_field_name], 's', label='GA ZIFs', c='b', markersize='18', markeredgewidth=1, markeredgecolor='k')
     plt.xlabel('# of candidate', fontsize=20)
     plt.ylabel('fitness',fontsize=20)
     plt.legend(loc='lower right', fontsize=20)
