@@ -100,9 +100,6 @@ def readData(source_file = './MyData.xlsx') -> pd.DataFrame:
     df=pd.read_excel(source_file)
     df.head(2)
     df['logD'] = np.log10(df['diffusivity'])
-    # df = df.dropna()
-    # df[df.gas == 'propylene']['logD'].max()
-    df[df.gas == 'N2']['logD'].count()
 
     # Keep appropriate columns
     df2=df[[ 'type', 'gas', 'MetalNum', 'aperture', 'size - van der Waals (Å)','mass', 'ascentricF', 'logD', 'size - kinetic diameter (Å)', 'ionicRad', 
@@ -130,6 +127,8 @@ def readData(source_file = './MyData.xlsx') -> pd.DataFrame:
     df2 = df2.dropna()
     df2=df2.reset_index(drop=True)
 
+    
+
     return df2
 
 def prepareDataForLearning(original_dataframe) -> tuple:
@@ -140,7 +139,6 @@ def prepareDataForLearning(original_dataframe) -> tuple:
      - the target values for each instance of the training data. 
     """
     df3 = original_dataframe[[
-    # 'diameter',
      'MetalNum',  
      'linker_length1', 'linker_length2', 'linker_length3',
     'func1_length', 'func2_length', 'func3_length' 
@@ -150,7 +148,6 @@ def prepareDataForLearning(original_dataframe) -> tuple:
     df4 = df4.reset_index(drop=True)
     
     Genes = np.asanyarray(df4[[
-        # 'diameter',
         'MetalNum',  
         'linker_length1', 'linker_length2', 'linker_length3',
         'func1_length', 'func2_length', 'func3_length' 
