@@ -33,15 +33,41 @@ import pygad
 import time
 import datetime
 
+
+#####
+#function to define the separation problem case
+#####
+def case(separation):
+    if separation == 'propylene':
+        diameter_tuple = (np.array([4.03]), np.array([4.16]))
+        mass_tuple = (np.array([42.08]), np.array([44.1]))
+        ascF_tuple = (np.array([0.142]), np.array([0.152]))
+        kD_tuple = (np.array([4.5]), np.array([4.3]))
+    elif separation == 'co2':
+        diameter_tuple = (np.array([3.24]), np.array([3.25]))
+        mass_tuple = (np.array([44.01]), np.array([16.04]))
+        ascF_tuple = (np.array([0.225]), np.array([0.011]))
+        kD_tuple = (np.array([3.3]), np.array([3.8]))
+    elif separation == 'o2':
+        diameter_tuple = (np.array([2.94]), np.array([3.13]))
+        mass_tuple = (np.array([31.999]), np.array([28.000]))
+        ascF_tuple = (np.array([0.022]), np.array([0.037]))
+        kD_tuple = (np.array([3.3]), np.array([3.8]))
+    
+    if separation == 'propylene' or separation=='co2':
+        pass
+
+    return diameter_tuple, mass_tuple, ascF_tuple, kD_tuple
+
 ####################################################################
 # Constant values
 #################
-linker_length1 = {3.66:{'linker_mass1':83, 'σ':0.325, 'e':0.7112},
-                 4.438:{'linker_mass1':81, 'σ':0.25, 'e':0.0627},
-                  4.86:{'linker_mass1':101.98, 'σ':0.285, 'e':0.255},
-                   5.7:{'linker_mass1':134.906, 'σ':0.34, 'e':1.2552},
-                  6.01:{'linker_mass1':223.8, 'σ':0.4, 'e':0.0627},
-                  6.41:{'linker_mass1':317.8, 'σ':0.367, 'e':1.8731}
+linker_length1 = {3.66:{'linker_mass1':83, 'σ_1':0.325, 'e_1':0.7112},
+                 4.438:{'linker_mass1':81, 'σ_1':0.25, 'e_1':0.0627},
+                  4.86:{'linker_mass1':101.98, 'σ_1':0.285, 'e_1':0.255},
+                   5.7:{'linker_mass1':134.906, 'σ_1':0.34, 'e_1':1.2552},
+                  6.01:{'linker_mass1':223.8, 'σ_1':0.4, 'e_1':0.0627},
+                  6.41:{'linker_mass1':317.8, 'σ_1':0.367, 'e_1':1.8731}
                   }
 
 linker_length2 = {3.66:{'linker_mass2':83, 'σ':0.325, 'e':0.7112},
@@ -95,7 +121,7 @@ MetalNum = {4:{'ionicRad':41, 'MetalMass': 9.012},
 
 ####################################################################
 
-def readData(source_file = './MyData.xlsx') -> pd.DataFrame:
+def readData(source_file = './TrainData.xlsx') -> pd.DataFrame:
     # Read file
     df=pd.read_excel(source_file)
     df.head(2)
@@ -103,35 +129,25 @@ def readData(source_file = './MyData.xlsx') -> pd.DataFrame:
 
     # Keep appropriate columns
     df2=df[[ 'type', 'gas', 'MetalNum', 'aperture', 'size - van der Waals (Å)','mass', 'ascentricF', 'logD', 'size - kinetic diameter (Å)', 'ionicRad', 
-       'Μ-N_lff', 'Μ-N_kFF', 'MetalCharge', 'MetalMass',
-       'apertureAtom_σ', 'apertureAtom_e', 'linker_length1', 'linker_length2',
-       'linker_length3', 'linker_mass1', 'linker_mass2', 'linker_mass3',
-       'func1_length', 'func2_length', 'func3_length', 'func1_mass',  
-       'func2_mass', 'func3_mass', 'func1_charge', 'func2_charge',
-       'func3_charge',]]
+        'Μ-N_lff', 'Μ-N_kFF', 'MetalCharge', 'MetalMass',
+        'σ_1', 'e_1', 'σ_2', 'e_2', 'σ_3', 'e_3', 'linker_length1', 'linker_length2',
+        'linker_length3', 'linker_mass1', 'linker_mass2', 'linker_mass3',
+        'func1_length', 'func2_length', 'func3_length', 'func1_mass',  
+        'func2_mass', 'func3_mass', 'func1_charge', 'func2_charge',
+        'func3_charge',]]
     
     # Rename columns
     df2=df2.rename(columns={'size - van der Waals (Å)':'diameter', 'size - kinetic diameter (Å)':'kdiameter', 
-        'apertureAtom_σ':'σ', 'apertureAtom_e':'e' })
+        })
 
     # Clear NA entries
     df2 = df2.dropna()
     # Remove outlier molecule (?)    
     df2=df2.reset_index(drop=True)
-    df2=df2[
-    # (df2['gas'] != 'isobutane') & (df2['gas'] != 'iso-butane')
-    (df2['gas'] != 'SF6')
-    #  (df2['gas'] != 'Rn')
-    ].reset_index()
-
-    df2 = df2.dropna()
-    df2=df2.reset_index(drop=True)
-
-    
-
+   
     return df2
 
-def prepareDataForLearning(original_dataframe) -> tuple:
+def prepareDataForLearning(original_dataframe, separation) -> tuple:
     """Given an appropriate input dataframe of training data, returns a tuple containing: 
      - the dataframe with the appropriate training columns, 
      - the gene representations of the input data, 
@@ -146,24 +162,26 @@ def prepareDataForLearning(original_dataframe) -> tuple:
 
     df4 = df3.drop_duplicates()
     df4 = df4.reset_index(drop=True)
-    
-    Genes = np.asanyarray(df4[[
-        'MetalNum',  
-        'linker_length1', 'linker_length2', 'linker_length3',
-        'func1_length', 'func2_length', 'func3_length' 
-                                    ]])
 
-    x_all = np.asanyarray(original_dataframe[[ 
+    if ((separation == 'propylene') or (separation == 'co2')):
+        Genes = np.asanyarray(df4[['MetalNum','linker_length1','func1_length']])
+    else:
+        Genes = np.asanyarray(df4[['MetalNum','linker_length1','linker_length3', 'func1_length',
+                                   'func3_length']])
+
+    x_all = np.asanyarray(df2[[
         'diameter',
         'mass',
         'ascentricF',
         'kdiameter',
         'MetalNum',  
-        'linker_length1', 'linker_length2', 'linker_length3',
-        'func1_length', 'func2_length', 'func3_length',
+        'linker_length1', 'linker_length3',
+        'func1_length',  'func3_length',
+        'linker_length2',
+        'func2_length', 
         'ionicRad', 'MetalMass',
         'linker_mass1', 'linker_mass2', 'linker_mass3',
-        'σ', 'e', 
+        'σ_1', 'e_1', 'σ_2', 'e_2', 'σ_3', 'e_3', 
         'func1_mass', 'func2_mass', 'func3_mass'
                                 ]])
 
@@ -173,28 +191,57 @@ def prepareDataForLearning(original_dataframe) -> tuple:
     return (df4, Genes,x_all, y_all)
 
 def trainModel(x_all, y_all):
-    XGBR = XGBRegressor(n_estimators=500, max_depth=5, eta=0.07, subsample=0.75, colsample_bytree=0.7, reg_lambda=0.4, reg_alpha=0.13,
-                        # n_jobs=6,
-                        nthread=8,
-                        random_state=61
-                    )
+    XGBR = XGBRegressor(n_estimators=800, max_depth=5, eta=0.02, subsample=0.75, colsample_bytree=0.3, reg_lambda=0.6, reg_alpha=0.15,
+                    # n_jobs=6,
+                    nthread=1,
+                    random_state=61
+                   )
 
     model = XGBR.fit(x_all, y_all)
 
     return model
 
-def get_base_vector_from_solution(solution):
-    return np.array([
+def get_base_vector_from_solution(solution, separation):
+    if ((separation == 'propylene') or (separation == 'co2')):
+        base_vector = np.array([
+                  linker_length1[solution[1]]['linker_length2'],
+                  linker_length1[solution[1]]['linker_length3'],
+                  func1_length[solution[2]]['func2_length'],
+                  func1_length[solution[2]]['func3_length'],
                   MetalNum[solution[0]]['ionicRad'],
                   MetalNum[solution[0]]['MetalMass'],
                   linker_length1[solution[1]]['linker_mass1'],
-                  linker_length2[solution[2]]['linker_mass2'],
-                  linker_length3[solution[3]]['linker_mass3'],
-                  linker_length1[solution[1]]['σ'],
-                  linker_length1[solution[1]]['e'],
-                  func1_length[solution[4]]['func1_mass'],
-                  func2_length[solution[5]]['func2_mass'],
-                  func3_length[solution[6]]['func3_mass']])
+                  linker_length1[solution[1]]['linker_mass2'],
+                  linker_length1[solution[1]]['linker_mass3'],
+                  linker_length1[solution[1]]['σ_1'],
+                  linker_length1[solution[1]]['e_1'],
+                  linker_length1[solution[1]]['σ_2'],
+                  linker_length1[solution[1]]['e_2'],
+                  linker_length1[solution[1]]['σ_3'],
+                  linker_length1[solution[1]]['e_3'],
+                  func1_length[solution[2]]['func1_mass'],
+                  func1_length[solution[2]]['func2_mass'],
+                  func1_length[solution[2]]['func3_mass']])
+    elif (separation == 'o2'):
+        base_vector=np.array([
+                  linker_length1[solution[1]]['linker_length2'],
+                  func1_length[solution[3]]['func2_length'],
+                  MetalNum[solution[0]]['ionicRad'],
+                  MetalNum[solution[0]]['MetalMass'],
+                  linker_length1[solution[1]]['linker_mass1'],
+                  linker_length1[solution[1]]['linker_mass2'],
+                  linker_length3[solution[2]]['linker_mass3'],
+                  linker_length1[solution[1]]['σ_1'],
+                  linker_length1[solution[1]]['e_1'],
+                  linker_length1[solution[1]]['σ_2'],
+                  linker_length1[solution[1]]['e_2'],
+                  linker_length3[solution[2]]['σ_3'],
+                  linker_length3[solution[2]]['e_3'],
+                  func1_length[solution[3]]['func1_mass'],
+                  func1_length[solution[3]]['func2_mass'],
+                  func3_length[solution[4]]['func3_mass']])
+
+    return base_vector
 
 def get_whole_vector_per_gas_from_solution(solution, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple):
     diameter_gas1, diameter_gas2 = diameter_tuple
@@ -219,10 +266,12 @@ def estimate_diffusivities_from_solution(solution, diameter_tuple, mass_tuple, a
 
 def fitness_base(solution, solution_idx, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, boundaries_D, boundaries_R, 
         model, customFitnessFormula : Callable[[float, float], float] = None) -> float:
+    
+
     diameter_gas1, diameter_gas2 = diameter_tuple
     mass_gas1, mass_gas2 = mass_tuple
-    ascF_gas1, ascF_gas2 = ascF_tuple
-    kD_gas1, kD_gas2 = kD_tuple
+    ascF_gas1, ascF_gas2 =  ascF_tuple
+    kD_gas1, kD_gas2 = kD_tuple 
         
     estimated_gas1_diffusivity, estimated_gas2_diffusivity = estimate_diffusivities_from_solution(solution, 
                                                                     diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, 
