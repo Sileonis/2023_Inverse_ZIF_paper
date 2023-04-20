@@ -33,59 +33,48 @@ import pygad
 import time
 import datetime
 
-####################################################################
-# Constant values
-#################
-linker_length1 = {3.66:{'linker_mass1':83, 'σ':0.325, 'e':0.7112},
-                 4.438:{'linker_mass1':81, 'σ':0.25, 'e':0.0627},
-                  4.86:{'linker_mass1':101.98, 'σ':0.285, 'e':0.255},
-                   5.7:{'linker_mass1':134.906, 'σ':0.34, 'e':1.2552},
-                  6.01:{'linker_mass1':223.8, 'σ':0.4, 'e':0.0627},
-                  6.41:{'linker_mass1':317.8, 'σ':0.367, 'e':1.8731}
+
+#####
+#function to define the separation problem case
+#####
+def case(separation):
+    if separation == 'propylene':
+        diameter_tuple = (np.array([4.03]), np.array([4.16]))
+        mass_tuple = (np.array([42.08]), np.array([44.1]))
+        ascF_tuple = (np.array([0.142]), np.array([0.152]))
+        kD_tuple = (np.array([4.5]), np.array([4.3]))
+    elif separation == 'co2':
+        diameter_tuple = (np.array([3.24]), np.array([3.25]))
+        mass_tuple = (np.array([44.01]), np.array([16.04]))
+        ascF_tuple = (np.array([0.225]), np.array([0.011]))
+        kD_tuple = (np.array([3.3]), np.array([3.8]))
+    elif separation == 'o2':
+        diameter_tuple = (np.array([2.94]), np.array([3.13]))
+        mass_tuple = (np.array([31.999]), np.array([28.000]))
+        ascF_tuple = (np.array([0.022]), np.array([0.037]))
+        kD_tuple = (np.array([3.3]), np.array([3.8]))
+    
+    if separation == 'propylene' or separation=='co2':
+        linker_length1 = {3.66:{'linker_mass1':83, 'σ_1':0.325, 'e_1':0.7112, 'linker_length2':3.66, 'linker_mass2':83, 'σ_2':0.325, 'e_2':0.7112, 'linker_length3':3.66, 'linker_mass3':83, 'σ_3':0.325, 'e_3':0.7112},
+                 4.438:{'linker_mass1':81, 'σ_1':0.25, 'e_1':0.0627, 'linker_length2':4.438, 'linker_mass2':81, 'σ_2':0.25, 'e_2':0.0627, 'linker_length3':4.438, 'linker_mass3':81, 'σ_3':0.25, 'e_3':0.0627},
+                  4.86:{'linker_mass1':101.98, 'σ_1':0.285, 'e_1':0.255, 'linker_length2':4.86, 'linker_mass2':101.98, 'σ_2':0.285, 'e_2':0.255, 'linker_length3':4.86, 'linker_mass3':101.98, 'σ_3':0.285, 'e_3':0.255},
+                   5.7:{'linker_mass1':134.906, 'σ_1':0.34, 'e_1':1.2552, 'linker_length2':5.7, 'linker_mass2':134.906, 'σ_2':0.34, 'e_2':1.2552, 'linker_length3':5.7, 'linker_mass3':134.906, 'σ_3':0.34, 'e_3':1.2552},
+                  6.01:{'linker_mass1':223.8, 'σ_1':0.4, 'e_1':1.8731, 'linker_length2':6.01, 'linker_mass2':223.8, 'σ_2':0.4, 'e_2':1.8731, 'linker_length3':6.01, 'linker_mass3':223.8, 'σ_3':0.4, 'e_3':1.8731},
+                  6.41:{'linker_mass1':317.8, 'σ_1':0.367, 'e_1':2.4267, 'linker_length2':6.41, 'linker_mass2':317.8, 'σ_2':0.367, 'e_2':2.4267, 'linker_length3':6.01, 'linker_mass3':223.8, 'σ_3':0.367, 'e_3':2.4267}
+                  }
+        
+        func1_length = {2.278:{'func1_mass':1., 'func2_length': 2.278, 'func2_mass':1., 'func3_length': 2.278, 'func3_mass':1.},
+                 3.54:{'func1_mass':35.45, 'func2_length': 3.54, 'func2_mass':35.45, 'func3_length': 3.54, 'func3_mass':35.45},
+                  3.78:{'func1_mass':15., 'func2_length': 3.78, 'func2_mass':15., 'func3_length': 3.78, 'func3_mass':15.},
+                   3.85:{'func1_mass':79.9, 'func2_length': 3.85, 'func2_mass':79.9, 'func3_length': 3.85, 'func3_mass':79.9},
+                  3.927:{'func1_mass':16., 'func2_length': 3.927, 'func2_mass':16., 'func3_length': 3.927, 'func3_mass':16.},
+                  4.093:{'func1_mass':31., 'func2_length': 4.093, 'func2_mass':31., 'func3_length': 4.093, 'func3_mass':31.}
                   }
 
-linker_length2 = {3.66:{'linker_mass2':83, 'σ':0.325, 'e':0.7112},
-                 4.438:{'linker_mass2':81, 'σ':0.25, 'e':0.0627},
-                  4.86:{'linker_mass2':101.98, 'σ':0.285, 'e':0.255},
-                   5.7:{'linker_mass2':134.906, 'σ':0.34, 'e':1.2552},
-                  6.01:{'linker_mass2':223.8, 'σ':0.4, 'e':0.0627},
-                  6.41:{'linker_mass2':317.8, 'σ':0.367, 'e':1.8731}
-                  }
-linker_length3 = {3.66:{'linker_mass3':83, 'σ':0.325, 'e':0.7112},
-                 4.438:{'linker_mass3':81, 'σ':0.25, 'e':0.0627},
-                  4.86:{'linker_mass3':101.98, 'σ':0.285, 'e':0.255},
-                   5.7:{'linker_mass3':134.906, 'σ':0.34, 'e':1.2552},
-                 5.996:{'linker_mass3':117., 'σ':0.25, 'e':0.0627},
-                  6.01:{'linker_mass3':223.8, 'σ':0.4, 'e':0.0627},
-                  6.41:{'linker_mass3':317.8, 'σ':0.367, 'e':1.8731}
-                  }
-
-func1_length = {2.278:{'func1_mass':1.},
-                 3.54:{'func1_mass':35.45},
-                  3.78:{'func1_mass':15.},
-                   3.85:{'func1_mass':79.9},
-                  3.927:{'func1_mass':16.},
-                  4.093:{'func1_mass':31.}
-                  }
-
-func2_length = {2.278:{'func2_mass':1.},
-                 3.54:{'func2_mass':35.45},
-                  3.78:{'func2_mass':15.},
-                   3.85:{'func2_mass':79.9},
-                  3.927:{'func2_mass':16.},
-                  4.093:{'func2_mass':31.}
-                  }
-
-func3_length = {2.278:{'func3_mass':1.},
-                    2.7:{'func3_mass':18.99},
-                  3.54:{'func3_mass':35.45},
-                  3.78:{'func3_mass':15.},
-                   3.85:{'func3_mass':79.9},
-                  3.927:{'func3_mass':16.},
-                  4.093:{'func3_mass':31.},
-                   4.25:{'func3_mass':127.},
-                  }
-MetalNum = {4:{'ionicRad':41, 'MetalMass': 9.012},
+        linker_length3 = None
+        func3_length = None
+        
+        MetalNum = {4:{'ionicRad':41, 'MetalMass': 9.012},
            29:{'ionicRad':71,'MetalMass': 63.456},
            12:{'ionicRad':71, 'MetalMass': 24.305},
            27:{'ionicRad':72, 'MetalMass': 58.930},
@@ -93,122 +82,212 @@ MetalNum = {4:{'ionicRad':41, 'MetalMass': 9.012},
            25:{'ionicRad':80, 'MetalMass': 54.938},
            48:{'ionicRad':92, 'MetalMass': 112.411}}
 
-####################################################################
+        # TODO: Fix
+        gene_space = [
+                [ 4,12,25,27,29,30,48],
+                [ 4.438, 4.86, 5.7, 6.01, 6.41],
+                [ 4.438, 4.86, 5.7, 6.01, 6.41],
+                [ 4.438, 4.86, 5.7,5.996,6.01, 6.41],
+                [ 3.54, 3.78, 3.85,  4.093],
+                [ 3.54, 3.78, 3.85,  4.093],
+                [2.278, 2.7, 3.54, 3.78, 3.85,  4.093, 4.25],
+            ]
+        
+    elif separation == 'o2':
+        linker_length1 = {3.66:{'linker_mass1':83, 'σ_1':0.325, 'e_1':0.7112, 'linker_length2':3.66, 'linker_mass2':83, 'σ_2':0.325, 'e_2':0.7112},
+                 4.438:{'linker_mass1':81, 'σ_1':0.25, 'e_1':0.0627, 'linker_length2':4.438, 'linker_mass2':81, 'σ_2':0.25, 'e_2':0.0627},
+                  4.86:{'linker_mass1':101.98, 'σ_1':0.285, 'e_1':0.255, 'linker_length2':4.86, 'linker_mass2':101.98, 'σ_2':0.285, 'e_2':0.255},
+                   5.7:{'linker_mass1':134.906, 'σ_1':0.34, 'e_1':1.2552, 'linker_length2':5.7, 'linker_mass2':134.906, 'σ_2':0.34, 'e_2':1.2552},
+                  6.01:{'linker_mass1':223.8, 'σ_1':0.4, 'e_1':1.8731, 'linker_length2':6.01, 'linker_mass2':223.8, 'σ_2':0.4, 'e_2':1.8731},
+                  6.41:{'linker_mass1':317.8, 'σ_1':0.367, 'e_1':2.4267, 'linker_length2':6.41, 'linker_mass2':317.8, 'σ_2':0.367, 'e_2':2.4267}
+                  }
 
-def readData(source_file = './MyData.xlsx') -> pd.DataFrame:
+        linker_length3 = {3.66:{'linker_mass3':83, 'σ_3':0.325, 'e_3':0.7112},
+                        4.438:{'linker_mass3':81, 'σ_3':0.25, 'e_3':0.0627},
+                        4.86:{'linker_mass3':101.98, 'σ_3':0.285, 'e_3':0.255},
+                        5.7:{'linker_mass3':134.906, 'σ_3':0.34, 'e_3':1.2552},
+                        5.996:{'linker_mass3':117., 'σ_3':0.25, 'e_3':0.0627},
+                        6.01:{'linker_mass3':223.8, 'σ_3':0.4, 'e_3':1.8731},
+                        6.41:{'linker_mass3':317.8, 'σ_3':0.367, 'e_3':2.4267}
+                        }
+
+        func1_length = {2.278:{'func1_mass':1., 'func2_length': 2.278, 'func2_mass':1.},
+                        3.54:{'func1_mass':35.45, 'func2_length': 3.54, 'func2_mass':35.45},
+                        3.78:{'func1_mass':15., 'func2_length': 3.78, 'func2_mass':15.},
+                        3.85:{'func1_mass':79.9, 'func2_length': 3.85, 'func2_mass':79.9},
+                        3.927:{'func1_mass':16., 'func2_length': 3.927, 'func2_mass':16.},
+                        4.093:{'func1_mass':31., 'func2_length': 4.093, 'func2_mass':31.}
+                        }
+
+        func3_length = {2.278:{'func3_mass':1.},
+                            2.7:{'func3_mass':18.99},
+                        3.54:{'func3_mass':35.45},
+                        3.78:{'func3_mass':15.},
+                        3.85:{'func3_mass':79.9},
+                        3.927:{'func3_mass':16.},
+                        4.093:{'func3_mass':31.},
+                        4.25:{'func3_mass':127.},
+                        }
+
+        MetalNum = {4:{'ionicRad':41, 'MetalMass': 9.012},
+                29:{'ionicRad':71,'MetalMass': 63.456},
+                12:{'ionicRad':71, 'MetalMass': 24.305},
+                27:{'ionicRad':72, 'MetalMass': 58.930},
+                30:{'ionicRad':74, 'MetalMass': 65.380},
+                25:{'ionicRad':80, 'MetalMass': 54.938},
+                48:{'ionicRad':92, 'MetalMass': 112.411}}
+
+        # TODO: Fix
+        gene_space = [
+                [ 4,12,25,27,29,30,48],
+                [ 4.438, 4.86, 5.7, 6.01, 6.41],
+                [ 4.438, 4.86, 5.7, 6.01, 6.41],
+                [ 4.438, 4.86, 5.7,5.996,6.01, 6.41],
+                [ 3.54, 3.78, 3.85,  4.093],
+                [ 3.54, 3.78, 3.85,  4.093],
+                [2.278, 2.7, 3.54, 3.78, 3.85,  4.093, 4.25],
+            ]
+        
+    if ((separation == 'propylene') or (separation == 'co2')):
+        gene_field_names = ['MetalNum','linker_length1','func1_length']
+    else:
+        gene_field_names = ['MetalNum','linker_length1','linker_length3', 'func1_length',
+                                   'func3_length']
+    return diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, linker_length1, func1_length, MetalNum, linker_length3, func3_length, gene_field_names, gene_space
+
+
+def readData(source_file = './TrainData.xlsx') -> pd.DataFrame:
     # Read file
     df=pd.read_excel(source_file)
     df.head(2)
     df['logD'] = np.log10(df['diffusivity'])
 
     # Keep appropriate columns
-    df2=df[[ 'type', 'gas', 'MetalNum', 'aperture', 'size - van der Waals (Å)','mass', 'ascentricF', 'logD', 'size - kinetic diameter (Å)', 'ionicRad', 
-       'Μ-N_lff', 'Μ-N_kFF', 'MetalCharge', 'MetalMass',
-       'apertureAtom_σ', 'apertureAtom_e', 'linker_length1', 'linker_length2',
-       'linker_length3', 'linker_mass1', 'linker_mass2', 'linker_mass3',
-       'func1_length', 'func2_length', 'func3_length', 'func1_mass',  
-       'func2_mass', 'func3_mass', 'func1_charge', 'func2_charge',
-       'func3_charge',]]
+    cleaned_original_df=df[[ 'type', 'gas', 'MetalNum', 'aperture', 'size - van der Waals (Å)','mass', 'ascentricF', 'logD', 'size - kinetic diameter (Å)', 'ionicRad', 
+        'Μ-N_lff', 'Μ-N_kFF', 'MetalCharge', 'MetalMass',
+        'σ_1', 'e_1', 'σ_2', 'e_2', 'σ_3', 'e_3', 'linker_length1', 'linker_length2',
+        'linker_length3', 'linker_mass1', 'linker_mass2', 'linker_mass3',
+        'func1_length', 'func2_length', 'func3_length', 'func1_mass',  
+        'func2_mass', 'func3_mass', 'func1_charge', 'func2_charge',
+        'func3_charge',]]
     
     # Rename columns
-    df2=df2.rename(columns={'size - van der Waals (Å)':'diameter', 'size - kinetic diameter (Å)':'kdiameter', 
-        'apertureAtom_σ':'σ', 'apertureAtom_e':'e' })
+    cleaned_original_df=cleaned_original_df.rename(columns={'size - van der Waals (Å)':'diameter', 'size - kinetic diameter (Å)':'kdiameter', 
+        })
 
     # Clear NA entries
-    df2 = df2.dropna()
+    cleaned_original_df = cleaned_original_df.dropna()
     # Remove outlier molecule (?)    
-    df2=df2.reset_index(drop=True)
-    df2=df2[
-    # (df2['gas'] != 'isobutane') & (df2['gas'] != 'iso-butane')
-    (df2['gas'] != 'SF6')
-    #  (df2['gas'] != 'Rn')
-    ].reset_index()
+    cleaned_original_df=cleaned_original_df.reset_index(drop=True)
+   
+    return cleaned_original_df
 
-    df2 = df2.dropna()
-    df2=df2.reset_index(drop=True)
-
-    
-
-    return df2
-
-def prepareDataForLearning(original_dataframe) -> tuple:
+def prepareDataForLearning(dataframe, gene_field_names  ) -> tuple:
     """Given an appropriate input dataframe of training data, returns a tuple containing: 
      - the dataframe with the appropriate training columns, 
      - the gene representations of the input data, 
      - the representation of the training data inlcuding all dependent and independent features,
      - the target values for each instance of the training data. 
     """
-    df3 = original_dataframe[[
+    selected_cols_df = dataframe[[
      'MetalNum',  
      'linker_length1', 'linker_length2', 'linker_length3',
     'func1_length', 'func2_length', 'func3_length' 
                                  ]]
 
-    df4 = df3.drop_duplicates()
-    df4 = df4.reset_index(drop=True)
-    
-    Genes = np.asanyarray(df4[[
-        'MetalNum',  
-        'linker_length1', 'linker_length2', 'linker_length3',
-        'func1_length', 'func2_length', 'func3_length' 
-                                    ]])
+    selected_cols_df = selected_cols_df.drop_duplicates()
+    selected_cols_df = selected_cols_df.reset_index(drop=True)
 
-    x_all = np.asanyarray(original_dataframe[[ 
+    Genes = np.asanyarray(selected_cols_df[gene_field_names])
+
+    x_all = np.asanyarray(dataframe[[
         'diameter',
         'mass',
         'ascentricF',
         'kdiameter',
         'MetalNum',  
-        'linker_length1', 'linker_length2', 'linker_length3',
-        'func1_length', 'func2_length', 'func3_length',
+        'linker_length1', 'linker_length3',
+        'func1_length',  'func3_length',
+        'linker_length2',
+        'func2_length', 
         'ionicRad', 'MetalMass',
         'linker_mass1', 'linker_mass2', 'linker_mass3',
-        'σ', 'e', 
+        'σ_1', 'e_1', 'σ_2', 'e_2', 'σ_3', 'e_3', 
         'func1_mass', 'func2_mass', 'func3_mass'
                                 ]])
 
 
-    y_all = np.array(original_dataframe[['logD']])    
+    y_all = np.array(dataframe[['logD']])    
 
-    return (df4, Genes,x_all, y_all)
+    return (selected_cols_df, Genes,x_all, y_all)
 
-def trainModel(x_all, y_all):
-    XGBR = XGBRegressor(n_estimators=500, max_depth=5, eta=0.07, subsample=0.75, colsample_bytree=0.7, reg_lambda=0.4, reg_alpha=0.13,
-                        # n_jobs=6,
-                        nthread=8,
-                        random_state=61
-                    )
+def train_model(x_all, y_all):
+    XGBR = XGBRegressor(n_estimators=800, max_depth=5, eta=0.02, subsample=0.75, colsample_bytree=0.3, reg_lambda=0.6, reg_alpha=0.15,
+                    # n_jobs=6,
+                    nthread=1,
+                    random_state=61
+                   )
 
     model = XGBR.fit(x_all, y_all)
 
     return model
 
-def get_base_vector_from_solution(solution):
-    return np.array([
+def get_base_vector_from_solution(solution, separation, linker_length1, func1_length, MetalNum, linker_length3 = None, func3_length = None):
+    if ((separation == 'propylene') or (separation == 'co2')):
+        base_vector = np.array([
+                  linker_length1[solution[1]]['linker_length2'],
+                  linker_length1[solution[1]]['linker_length3'],
+                  func1_length[solution[2]]['func2_length'],
+                  func1_length[solution[2]]['func3_length'],
                   MetalNum[solution[0]]['ionicRad'],
                   MetalNum[solution[0]]['MetalMass'],
                   linker_length1[solution[1]]['linker_mass1'],
-                  linker_length2[solution[2]]['linker_mass2'],
-                  linker_length3[solution[3]]['linker_mass3'],
-                  linker_length1[solution[1]]['σ'],
-                  linker_length1[solution[1]]['e'],
-                  func1_length[solution[4]]['func1_mass'],
-                  func2_length[solution[5]]['func2_mass'],
-                  func3_length[solution[6]]['func3_mass']])
+                  linker_length1[solution[1]]['linker_mass2'],
+                  linker_length1[solution[1]]['linker_mass3'],
+                  linker_length1[solution[1]]['σ_1'],
+                  linker_length1[solution[1]]['e_1'],
+                  linker_length1[solution[1]]['σ_2'],
+                  linker_length1[solution[1]]['e_2'],
+                  linker_length1[solution[1]]['σ_3'],
+                  linker_length1[solution[1]]['e_3'],
+                  func1_length[solution[2]]['func1_mass'],
+                  func1_length[solution[2]]['func2_mass'],
+                  func1_length[solution[2]]['func3_mass']])
+    elif (separation == 'o2'):
+        base_vector=np.array([
+                  linker_length1[solution[1]]['linker_length2'],
+                  func1_length[solution[3]]['func2_length'],
+                  MetalNum[solution[0]]['ionicRad'],
+                  MetalNum[solution[0]]['MetalMass'],
+                  linker_length1[solution[1]]['linker_mass1'],
+                  linker_length1[solution[1]]['linker_mass2'],
+                  linker_length3[solution[2]]['linker_mass3'],
+                  linker_length1[solution[1]]['σ_1'],
+                  linker_length1[solution[1]]['e_1'],
+                  linker_length1[solution[1]]['σ_2'],
+                  linker_length1[solution[1]]['e_2'],
+                  linker_length3[solution[2]]['σ_3'],
+                  linker_length3[solution[2]]['e_3'],
+                  func1_length[solution[3]]['func1_mass'],
+                  func1_length[solution[3]]['func2_mass'],
+                  func3_length[solution[4]]['func3_mass']])
 
-def get_whole_vector_per_gas_from_solution(solution, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple):
+    return base_vector
+
+def get_whole_vector_per_gas_from_solution(solution, separation, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple,
+         linker_length1, func1_length, linker_length3 = None, func3_length = None):
     diameter_gas1, diameter_gas2 = diameter_tuple
     mass_gas1, mass_gas2 = mass_tuple
     ascF_gas1, ascF_gas2 = ascF_tuple
     kD_gas1, kD_gas2 = kD_tuple
 
-    solution2=get_base_vector_from_solution(solution)
+    solution2=get_base_vector_from_solution(solution, separation, linker_length1, func1_length, linker_length3, func3_length)
     solution_gas1=np.concatenate((diameter_gas1, mass_gas1, ascF_gas1, kD_gas1, solution,solution2), axis=0, out=None, dtype=None, casting="same_kind")
     solution_gas2=np.concatenate((diameter_gas2, mass_gas2, ascF_gas2, kD_gas2,solution,solution2), axis=0, out=None, dtype=None, casting="same_kind")
 
     return solution_gas1, solution_gas2
 
-def estimate_diffusivities_from_solution(solution, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, model):
+def estimate_diffusivities_from_solution(solution, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, linker, model):
     solution_gas1, solution_gas2 = get_whole_vector_per_gas_from_solution(solution, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple)
     
     estimated_gas1_diffusivity  = model.predict([solution_gas1])[0]
@@ -216,14 +295,7 @@ def estimate_diffusivities_from_solution(solution, diameter_tuple, mass_tuple, a
 
     return estimated_gas1_diffusivity, estimated_gas2_diffusivity
 
-
-def fitness_base(solution, solution_idx, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, boundaries_D, boundaries_R, 
-        model, customFitnessFormula : Callable[[float, float], float] = None) -> float:
-    diameter_gas1, diameter_gas2 = diameter_tuple
-    mass_gas1, mass_gas2 = mass_tuple
-    ascF_gas1, ascF_gas2 = ascF_tuple
-    kD_gas1, kD_gas2 = kD_tuple
-        
+def fitness_base(solution, solution_idx, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, boundaries_D, boundaries_R, model, customFitnessFormula : Callable[[float, float], float] = None) -> float:
     estimated_gas1_diffusivity, estimated_gas2_diffusivity = estimate_diffusivities_from_solution(solution, 
                                                                     diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, 
                                                                     model)
@@ -292,6 +364,7 @@ def prepareGA(fitness, starting_population_data, suppress_warnings=False, **kwar
 
     # narrowed down options
     if 'gene_space' not in kwargs:
+        print("[WARNING]: no gene space defined... Using a default gene space.")
         gene_space =  [
                     [ 4,12,25,27,29,30,48],
                     [ 4.438, 4.86, 5.7, 6.01, 6.41],
@@ -388,7 +461,10 @@ def runGA(ga_instance):
     print ("Current date and time : ")
     print (now.strftime("%Y-%m-%d %H:%M:%S"))
     start_time = time.time()
+
+    # Actually run the GA
     ga_instance.run()
+
     print("--- %s minutes ---" % ((time.time() - start_time)/60))
     now = datetime.datetime.now()
     print ("Current date and time : ")
@@ -398,7 +474,8 @@ def runGA(ga_instance):
     print("Parameters of the best solution : {solution}".format(solution=solution))
     print("Fitness value of the best solution = {solution_fitness}".format(solution_fitness=solution_fitness))
 
-    solution2 = get_base_vector_from_solution(solution)
+    # Obsolete
+    # solution2 = get_base_vector_from_solution(solution)
 
     return solution, solution_fitness, solution_idx
 
