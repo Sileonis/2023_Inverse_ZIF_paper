@@ -225,15 +225,15 @@ def train_model(x_all, y_all):
 
     return model
 
-def get_base_vector_from_solution(solution, separation, linker_length1, func1_length, MetalNum, linker_length3 = None, func3_length = None):
+def get_base_vector_from_solution(solution, separation, linker_length1, func1_length, metalNum, linker_length3 = None, func3_length = None):
     if ((separation == 'propylene') or (separation == 'co2')):
         base_vector = np.array([
                   linker_length1[solution[1]]['linker_length2'],
                   linker_length1[solution[1]]['linker_length3'],
                   func1_length[solution[2]]['func2_length'],
                   func1_length[solution[2]]['func3_length'],
-                  MetalNum[solution[0]]['ionicRad'],
-                  MetalNum[solution[0]]['MetalMass'],
+                  metalNum[solution[0]]['ionicRad'],
+                  metalNum[solution[0]]['MetalMass'],
                   linker_length1[solution[1]]['linker_mass1'],
                   linker_length1[solution[1]]['linker_mass2'],
                   linker_length1[solution[1]]['linker_mass3'],
@@ -250,8 +250,8 @@ def get_base_vector_from_solution(solution, separation, linker_length1, func1_le
         base_vector=np.array([
                   linker_length1[solution[1]]['linker_length2'],
                   func1_length[solution[3]]['func2_length'],
-                  MetalNum[solution[0]]['ionicRad'],
-                  MetalNum[solution[0]]['MetalMass'],
+                  metalNum[solution[0]]['ionicRad'],
+                  metalNum[solution[0]]['MetalMass'],
                   linker_length1[solution[1]]['linker_mass1'],
                   linker_length1[solution[1]]['linker_mass2'],
                   linker_length3[solution[2]]['linker_mass3'],
@@ -268,30 +268,50 @@ def get_base_vector_from_solution(solution, separation, linker_length1, func1_le
     return base_vector
 
 def get_whole_vector_per_gas_from_solution(solution, separation, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple,
+        metalNum, 
          linker_length1, func1_length, linker_length3 = None, func3_length = None):
     diameter_gas1, diameter_gas2 = diameter_tuple
     mass_gas1, mass_gas2 = mass_tuple
     ascF_gas1, ascF_gas2 = ascF_tuple
     kD_gas1, kD_gas2 = kD_tuple
 
-    solution2=get_base_vector_from_solution(solution, separation, linker_length1, func1_length, linker_length3, func3_length)
+    solution2=get_base_vector_from_solution(solution, separation, linker_length1, func1_length, 
+                                            metalNum,
+                                            linker_length3, func3_length)
     solution_gas1=np.concatenate((diameter_gas1, mass_gas1, ascF_gas1, kD_gas1, solution,solution2), axis=0, out=None, dtype=None, casting="same_kind")
     solution_gas2=np.concatenate((diameter_gas2, mass_gas2, ascF_gas2, kD_gas2,solution,solution2), axis=0, out=None, dtype=None, casting="same_kind")
 
     return solution_gas1, solution_gas2
 
-def estimate_diffusivities_from_solution(solution, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, linker, model):
-    solution_gas1, solution_gas2 = get_whole_vector_per_gas_from_solution(solution, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple)
+def estimate_diffusivities_from_solution(solution, separation, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, 
+                                         metalNum, model,
+                                        linker_length1, func1_length,
+                                        linker_length3 = None, func3_length = None):
+    solution_gas1, solution_gas2 = get_whole_vector_per_gas_from_solution(solution, separation, 
+                                        diameter_tuple, mass_tuple, ascF_tuple, kD_tuple,
+                                        metalNum, 
+                                        linker_length1=linker_length1, func1_length=func1_length,
+                                        linker_length3=linker_length3, func3_length=func3_length)
     
     estimated_gas1_diffusivity  = model.predict([solution_gas1])[0]
     estimated_gas2_diffusivity  = model.predict([solution_gas2])[0]
 
     return estimated_gas1_diffusivity, estimated_gas2_diffusivity
 
-def fitness_base(solution, solution_idx, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, boundaries_D, boundaries_R, model, customFitnessFormula : Callable[[float, float], float] = None) -> float:
+def fitness_base(solution, solution_idx, separation, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, 
+                 boundaries_D, boundaries_R, linker_length1, func1_length,
+                 linker_length3 = None, func3_length = None,
+                 model = None, customFitnessFormula : Callable[[float, float], float] = None
+                ) -> float:
+    
+    if model is None:
+        raise RuntimeError("Model needs to be specified. Aborting.")
+    
     estimated_gas1_diffusivity, estimated_gas2_diffusivity = estimate_diffusivities_from_solution(solution, 
-                                                                    diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, 
-                                                                    model)
+                                                                separation, diameter_tuple, mass_tuple, ascF_tuple, 
+                                                                kD_tuple, model, linker_length1, func1_length, 
+                                                                linker_length3=linker_length3, func3_length=func3_length
+                                                                )
 
     # If no fitness is defined
     if (customFitnessFormula == None):
@@ -320,7 +340,7 @@ def represent_instances_as_genes(instances_dataframe: pd.DataFrame) -> np.array:
     return np.asanyarray(instances_dataframe[GENE_FIELDS])
 
 
-def prepareGA(fitness, starting_population_data, gene_field_names, suppress_warnings=False, **kwargs):
+def prepareGA(fitness, starting_population_data, gene_space, suppress_warnings=False, **kwargs):
     fitness_function = fitness
 
     # TODO: Replace all parameters with default values from pygad initializer
@@ -350,7 +370,7 @@ def prepareGA(fitness, starting_population_data, gene_field_names, suppress_warn
     else:
         mutation_type = kwargs['mutation_type']
 
-    Genes = np.asanyarray(starting_population_data[gene_field_names])
+    Genes = np.asanyarray(starting_population_data)
 
     initial_population = Genes
 
@@ -462,8 +482,17 @@ def runGA(ga_instance):
 
     return solution, solution_fitness, solution_idx
 
-def evaluate_solution(solution, model, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple):
-    solution_gas1, solution_gas2= get_whole_vector_per_gas_from_solution(solution, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple)
+def evaluate_solution(solution, separation, model, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple,
+                        metalNum, 
+                        linker_length1, func1_length,
+                        linker_length3=None, func3_length=None):
+    solution_gas1, solution_gas2= get_whole_vector_per_gas_from_solution(solution, separation,
+                                                                         diameter_tuple, 
+                                                                         mass_tuple, ascF_tuple, kD_tuple,
+                                                                         metalNum, 
+                                                                         linker_length1, func1_length,
+                                                                         linker_length3, func3_length
+                                                                         )
 
     prediction_gas1 = model.predict([solution_gas1])[0]
     prediction_gas2 = model.predict([solution_gas2])[0]
