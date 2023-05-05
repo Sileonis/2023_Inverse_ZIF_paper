@@ -86,11 +86,7 @@ def case(separation):
         gene_space = [
                 [ 4,12,25,27,29,30,48],
                 [ 4.438, 4.86, 5.7, 6.01, 6.41],
-                [ 4.438, 4.86, 5.7, 6.01, 6.41],
-                [ 4.438, 4.86, 5.7,5.996,6.01, 6.41],
                 [ 3.54, 3.78, 3.85,  4.093],
-                [ 3.54, 3.78, 3.85,  4.093],
-                [2.278, 2.7, 3.54, 3.78, 3.85,  4.093, 4.25],
             ]
         
     elif separation == 'o2':
@@ -138,15 +134,13 @@ def case(separation):
                 48:{'ionicRad':92, 'MetalMass': 112.411}}
 
         # TODO: Fix
-        gene_space = [
-                [ 4,12,25,27,29,30,48],
-                [ 4.438, 4.86, 5.7, 6.01, 6.41],
-                [ 4.438, 4.86, 5.7, 6.01, 6.41],
-                [ 4.438, 4.86, 5.7,5.996,6.01, 6.41],
-                [ 3.54, 3.78, 3.85,  4.093],
-                [ 3.54, 3.78, 3.85,  4.093],
-                [2.278, 2.7, 3.54, 3.78, 3.85,  4.093, 4.25],
-            ]
+        gene_space =  [
+                    [ 4,12,25,27,29,30,48],
+                    [ 4.438, 4.86, 5.7, 6.01, 6.41],
+                    [ 4.438, 4.86, 5.7,5.996,6.01, 6.41],
+                    [ 3.54, 3.78, 3.85,  4.093],
+                    [2.278,2.7,3.54, 3.78, 3.85,  4.093,4.25]
+                    ]
         
     if ((separation == 'propylene') or (separation == 'co2')):
         gene_field_names = ['MetalNum','linker_length1','func1_length']
@@ -215,7 +209,6 @@ def prepareDataForLearning(dataframe, gene_field_names  ) -> tuple:
         'σ_1', 'e_1', 'σ_2', 'e_2', 'σ_3', 'e_3', 
         'func1_mass', 'func2_mass', 'func3_mass'
                                 ]])
-
 
     y_all = np.array(dataframe[['logD']])    
 
@@ -317,7 +310,6 @@ def fitness_base(solution, solution_idx, diameter_tuple, mass_tuple, ascF_tuple,
 #############
 # Field-related constants
 GENE_FIELDS = [
-        # 'diameter',
         'MetalNum',  
         'linker_length1', 'linker_length2', 'linker_length3',
         'func1_length', 'func2_length', 'func3_length' 
@@ -328,7 +320,7 @@ def represent_instances_as_genes(instances_dataframe: pd.DataFrame) -> np.array:
     return np.asanyarray(instances_dataframe[GENE_FIELDS])
 
 
-def prepareGA(fitness, starting_population_data, suppress_warnings=False, **kwargs):
+def prepareGA(fitness, starting_population_data, gene_field_names, suppress_warnings=False, **kwargs):
     fitness_function = fitness
 
     # TODO: Replace all parameters with default values from pygad initializer
@@ -349,7 +341,7 @@ def prepareGA(fitness, starting_population_data, suppress_warnings=False, **kwar
     
 
     if 'mutation_probability' not in kwargs:
-        mutation_probability = [0.5, 0.01] # originally [0.4, 0.01]
+        mutation_probability = [0.6, 0.03] # originally [0.4, 0.01]
     else:
         mutation_probability = kwargs['mutation_probability']
 
@@ -358,25 +350,25 @@ def prepareGA(fitness, starting_population_data, suppress_warnings=False, **kwar
     else:
         mutation_type = kwargs['mutation_type']
 
-    Genes = np.asanyarray(starting_population_data[GENE_FIELDS])
+    Genes = np.asanyarray(starting_population_data[gene_field_names])
 
     initial_population = Genes
 
     # narrowed down options
-    if 'gene_space' not in kwargs:
-        print("[WARNING]: no gene space defined... Using a default gene space.")
-        gene_space =  [
-                    [ 4,12,25,27,29,30,48],
-                    [ 4.438, 4.86, 5.7, 6.01, 6.41],
-                    [ 4.438, 4.86, 5.7, 6.01, 6.41],
-                    [ 4.438, 4.86, 5.7,5.996,6.01, 6.41],
-                    [ 3.54, 3.78, 3.85,  4.093],
-                    [ 3.54, 3.78, 3.85,  4.093],
-                    # [ 3.54, 3.78, 3.85,  4.093]
-                    [2.278, 2.7, 3.54, 3.78, 3.85,  4.093, 4.25],
-                    ]
-    else:
-        gene_space = kwargs['gene_space']
+    # if 'gene_space' not in kwargs:
+    #     print("[WARNING]: no gene space defined... Using a default gene space.")
+    #     gene_space =  [
+    #                 [ 4,12,25,27,29,30,48],
+    #                 [ 4.438, 4.86, 5.7, 6.01, 6.41],
+    #                 [ 4.438, 4.86, 5.7, 6.01, 6.41],
+    #                 [ 4.438, 4.86, 5.7,5.996,6.01, 6.41],
+    #                 [ 3.54, 3.78, 3.85,  4.093],
+    #                 [ 3.54, 3.78, 3.85,  4.093],
+    #                 # [ 3.54, 3.78, 3.85,  4.093]
+    #                 [2.278, 2.7, 3.54, 3.78, 3.85,  4.093, 4.25],
+    #                 ]
+    # else:
+    #     gene_space = kwargs['gene_space']
 
     if 'parent_selection_type' not in kwargs:   
         parent_selection_type = "tournament" #  "sss", "rws", "tournament", "rank", "random"
@@ -424,32 +416,23 @@ def prepareGA(fitness, starting_population_data, suppress_warnings=False, **kwar
     
     # Actually initialize GA
     ga_instance = pygad.GA(num_generations=num_generations,
-                       num_parents_mating=num_parents_mating,
-                       fitness_func=fitness_function,
-                       initial_population = initial_population, 
-                       parent_selection_type=parent_selection_type,
-                       keep_parents=keep_parents,
-                       keep_elitism=keep_elitism,
-                       crossover_type=crossover_type,
-                       mutation_type=mutation_type, 
-                       # mutation_num_genes = mutation_num_genes,
-                       gene_space = gene_space,
-                       # sol_per_pop = sol_per_pop,
-                       # num_genes = num_genes,
-                       crossover_probability = crossover_probability,
-                       mutation_probability = mutation_probability,
-                       K_tournament = K_tournament,
-                       allow_duplicate_genes=False,
-                       # stop_criteria = "reach_100",
-                       # stop_criteria=["reach_127.4", "saturate_160"],
-                       stop_criteria=stop_criteria,
-                       save_solutions=True,
-                       random_seed=random_seed,
-                    #    parallel_processing=["thread", 20],
-                    #    parallel_processing=["process", 8],
-                       on_generation=on_generation,
-                       save_best_solutions=True,
-                       suppress_warnings=suppress_warnings
+                        num_parents_mating=num_parents_mating,
+                        fitness_func=fitness_function,
+                        initial_population = initial_population, 
+                        parent_selection_type=parent_selection_type,
+                        keep_elitism=keep_elitism,
+                        crossover_type=crossover_type,
+                        mutation_type=mutation_type, 
+                        gene_space = gene_space,
+                        crossover_probability = crossover_probability,
+                        mutation_probability = mutation_probability,
+                        K_tournament = K_tournament,
+                        allow_duplicate_genes=False,
+                        save_solutions=True,
+                        random_seed=None,
+                        suppress_warnings=True,
+                        parallel_processing= 4,
+                        save_best_solutions=True
                       )
         
     return ga_instance
