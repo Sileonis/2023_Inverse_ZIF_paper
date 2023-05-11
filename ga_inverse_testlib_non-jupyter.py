@@ -1,12 +1,35 @@
+#! /bin/env python
 # Import library
 from ga_inverse import *
+import argparse
+import sys
 
-selected_case = 'co2' # You can choose among 'propylene', 'o2' and 'co2', which correspond to propylene/propane, o2/n2 and co2/ch4 mixtures, respectively
+# Command line parameters
+parser = argparse.ArgumentParser(
+                    prog='ga_inverse_testlib_non-jupyter',
+                    description='This script: (a) creates an ML model connecting MOF and gas parameters to an expected functional output (logDi & logDi/logDj, for species i and j), ' + 
+                        '(b) given a target functional output in the specific (MOF,gas) setting, searches and suggests promising MOF design parameters.',
+                    epilog='For more information check the paper at: https://chemrxiv.org/engage/chemrxiv/article-details/642c2e0a16782ec9e6557a3e')
+
+parser.add_argument('-c', '--case', choices=['co2','propylene', 'o2'], help='The gas used in the setting.', default='co2')
+parser.add_argument('-t', '--trainingDataFile', help='The (XLSX) datafile containing the training data.', default='./TrainData.xlsx')
+parser.add_argument('-lD', '--lowerD', help='TODO', type=float)
+parser.add_argument('-hD', '--higherD', help='TODO',type=float)
+parser.add_argument('-lR', '--lowerR', help='TODO',type=float)
+parser.add_argument('-hR', '--higherR', help='TODO',type=float)
+parser.add_argument('-r', '--rounds', help='TODO',type=int, default=1)
+parser.add_argument('-g', '--generations', help='TODO',type=int, default=100)
+parsed_args = parser.parse_args([x for x in sys.argv if x != sys.argv[0]]) # Actually parse, ignoring the name of the program
+print("Using parameters:\n%s"%(str(parsed_args)))
+
+
+selected_case = parsed_args.case # You can choose among 'propylene', 'o2' and 'co2', which correspond to propylene/propane, o2/n2 and co2/ch4 mixtures, respectively
 separation = selected_case
 diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, linker_length1, func1_length, metalNum, linker_length3, func3_length, GeneFieldNames, gene_space = case(selected_case)
+num_generations = parsed_args.generations
 
 # Read data
-data_from_file = readData('./TrainData.xlsx')
+data_from_file = readData(parsed_args.trainingDataFile)
 training_data, gene_repr_of_training_data, training_x, training_y = prepareDataForLearning(data_from_file, GeneFieldNames)
 
 
@@ -15,8 +38,12 @@ model = train_model(training_x, training_y)
 
 # Prepare GA
 ## Fitness function
-boundaries_D = np.array([-9, -10])
-boundaries_R = np.array([4, 5])
+boundaries_D = np.array([parsed_args.lowerD, parsed_args.higherD])
+boundaries_R = np.array([parsed_args.lowerR, parsed_args.higherR])
+
+# CO2 case example boundaries
+# boundaries_D = np.array([-10, -9])
+# boundaries_R = np.array([4, 5])
 
 # Custom fitness function
 def my_fitness(estimated_gas1_diffusivity, estimated_gas2_diffusivity, result_details: dict = None):
@@ -55,14 +82,14 @@ def ga_fitness(solution, solution_idx):
 
 
 # Define single loop
-def run_one_ga_loop():
+def run_one_ga_loop(num_generations=100):
     # Starting population
     starting_population = gene_repr_of_training_data
 
     # Actual initialization
     ga_instance = prepareGA(fitness=ga_fitness, starting_population_data=starting_population,
                             gene_space =  gene_space,
-                            num_generations=2, on_generation=None, suppress_warnings=True)
+                            num_generations=num_generations, on_generation=None, suppress_warnings=True)
         
     # Run GA
     runGA(ga_instance)
@@ -91,7 +118,7 @@ solutions_from_all_loops = None
 for i in range(Rounds):
     start_time = time.time()
 
-    best_solutions_of_loop = run_one_ga_loop()
+    best_solutions_of_loop = run_one_ga_loop(num_generations=num_generations)
 
     # Append to all solutions set
     if solutions_from_all_loops is None:
