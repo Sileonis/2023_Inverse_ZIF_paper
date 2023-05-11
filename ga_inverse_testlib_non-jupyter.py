@@ -19,7 +19,7 @@ parser.add_argument('-lR', '--lowerR', help='TODO',type=float)
 parser.add_argument('-hR', '--higherR', help='TODO',type=float)
 parser.add_argument('-r', '--rounds', help='TODO',type=int, default=1)
 parser.add_argument('-g', '--generations', help='TODO',type=int, default=100)
-parsed_args = parser.parse_args([x for x in sys.argv if x != sys.argv[0]]) # Actually parse, ignoring the name of the program
+parsed_args = parser.parse_args() # Actually parse
 print("Using parameters:\n%s"%(str(parsed_args)))
 
 
