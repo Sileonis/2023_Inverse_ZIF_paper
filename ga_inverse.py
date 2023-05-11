@@ -299,7 +299,7 @@ def estimate_diffusivities_from_solution(solution, separation, diameter_tuple, m
     return estimated_gas1_diffusivity, estimated_gas2_diffusivity
 
 def fitness_base(solution, solution_idx, separation, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, 
-                 boundaries_D, boundaries_R, linker_length1, func1_length,
+                 metalNum, boundaries_D, boundaries_R, linker_length1, func1_length,
                  linker_length3 = None, func3_length = None,
                  model = None, customFitnessFormula : Callable[[float, float], float] = None
                 ) -> float:
@@ -309,7 +309,7 @@ def fitness_base(solution, solution_idx, separation, diameter_tuple, mass_tuple,
     
     estimated_gas1_diffusivity, estimated_gas2_diffusivity = estimate_diffusivities_from_solution(solution, 
                                                                 separation, diameter_tuple, mass_tuple, ascF_tuple, 
-                                                                kD_tuple, model, linker_length1, func1_length, 
+                                                                kD_tuple, metalNum, model, linker_length1, func1_length, 
                                                                 linker_length3=linker_length3, func3_length=func3_length
                                                                 )
 

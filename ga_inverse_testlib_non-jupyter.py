@@ -30,12 +30,13 @@ def my_fitness(estimated_gas1_diffusivity, estimated_gas2_diffusivity, result_de
         # then update it the intermediate results
         result_details['Diffusivity'] = estimated_gas1_diffusivity
         result_details['Ratio'] = Ratio
-        if  (np.min(boundaries_D) < estimated_gas1_diffusivity < np.max(boundaries_D)) and (np.min(boundaries_R) < Ratio < np.max(boundaries_R)):
-            DiffusivityContribution = 1.0/(abs(np.min(boundaries_D) - estimated_gas1_diffusivity) + abs(np.max(boundaries_D) - estimated_gas1_diffusivity))
-            RatiosContribution = 1.0/(abs(np.min(boundaries_R) - Ratio) + abs(np.max(boundaries_R) - Ratio))
-        else:
-            RatiosContribution = 1/(np.exp(abs(Ratio-np.min(boundaries_R)))+np.exp(abs(Ratio-np.max(boundaries_R))))
-            DiffusivityContribution = 1/(np.exp(abs(estimated_gas1_diffusivity-np.min(boundaries_D)))+np.exp(abs(estimated_gas1_diffusivity-np.max(boundaries_D))))
+    
+    if  (np.min(boundaries_D) < estimated_gas1_diffusivity < np.max(boundaries_D)) and (np.min(boundaries_R) < Ratio < np.max(boundaries_R)):
+        DiffusivityContribution = 1.0/(abs(np.min(boundaries_D) - estimated_gas1_diffusivity) + abs(np.max(boundaries_D) - estimated_gas1_diffusivity))
+        RatiosContribution = 1.0/(abs(np.min(boundaries_R) - Ratio) + abs(np.max(boundaries_R) - Ratio))
+    else:
+        RatiosContribution = 1/(np.exp(abs(Ratio-np.min(boundaries_R)))+np.exp(abs(Ratio-np.max(boundaries_R))))
+        DiffusivityContribution = 1/(np.exp(abs(estimated_gas1_diffusivity-np.min(boundaries_D)))+np.exp(abs(estimated_gas1_diffusivity-np.max(boundaries_D))))
     
     overallFitnessMeasure = 0.5*DiffusivityContribution + 0.5*RatiosContribution
 
@@ -46,6 +47,7 @@ def ga_fitness(solution, solution_idx):
     return fitness_base(solution=solution, solution_idx=solution_idx, separation=separation,
                         diameter_tuple=diameter_tuple, 
                         mass_tuple=mass_tuple, ascF_tuple=ascF_tuple, kD_tuple=kD_tuple,
+                        metalNum=metalNum,
                         boundaries_D=boundaries_D, boundaries_R=boundaries_R, 
                         linker_length1=linker_length1, func1_length=func1_length,
                         linker_length3=linker_length3, func3_length=func3_length,
@@ -134,7 +136,9 @@ def add_to_best_zifs_list(idx, estimated_gas1_diffusivity, estimated_gas2_diffus
 for mof_id, solution_vector in enumerate(best_solutions_list):
     # Calculate the 2 components of the fitness 
     # and add them to the data frame
-    fitness_base(solution_vector, mof_id, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, boundaries_D, boundaries_R, model,
+    fitness_base(solution_vector, mof_id, separation, diameter_tuple, mass_tuple, ascF_tuple, kD_tuple,
+                 metalNum, boundaries_D, boundaries_R, linker_length1, func1_length,
+                  linker_length3, func3_length, model,
                  customFitnessFormula = lambda estimated_gas1_diffusivity, estimated_gas2_diffusivity: 
                     add_to_best_zifs_list(mof_id, estimated_gas1_diffusivity, estimated_gas2_diffusivity)
                  )
