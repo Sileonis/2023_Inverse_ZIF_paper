@@ -13,12 +13,12 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument('-c', '--case', choices=['co2','propylene', 'o2'], help='The gas used in the setting.', default='co2')
 parser.add_argument('-t', '--trainingDataFile', help='The (XLSX) datafile containing the training data.', default='./TrainData.xlsx')
-parser.add_argument('-lD', '--lowerD', help='TODO', type=float)
-parser.add_argument('-hD', '--higherD', help='TODO',type=float)
-parser.add_argument('-lR', '--lowerR', help='TODO',type=float)
-parser.add_argument('-hR', '--higherR', help='TODO',type=float)
-parser.add_argument('-r', '--rounds', help='TODO',type=int, default=1)
-parser.add_argument('-g', '--generations', help='TODO',type=int, default=100)
+parser.add_argument('-lD', '--lowerD', help='The lower acceptable limit for logD.', type=float)
+parser.add_argument('-hD', '--higherD', help='The higher acceptable limit for logD.',type=float)
+parser.add_argument('-lR', '--lowerR', help='The lower acceptable limit for the ratio logDi/logDj.',type=float)
+parser.add_argument('-hR', '--higherR', help='The higher acceptable limit for the ratio logDi/logDj.',type=float)
+parser.add_argument('-r', '--rounds', help='The number of Genetic Algorithm (GA) runs. [Default: 1]',type=int, default=1)
+parser.add_argument('-g', '--generations', help='The number of generations of the GA run. [Default: 100]',type=int, default=100)
 parsed_args = parser.parse_args() # Actually parse
 print("Using parameters:\n%s"%(str(parsed_args)))
 
