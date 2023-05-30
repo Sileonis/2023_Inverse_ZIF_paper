@@ -20,9 +20,21 @@ Once the project packages are in place, you can execute the code to see the prog
 
     python ga_inverse_testlib_non-jupyter.py -h
 
-A typical run (for a CO2 setting) is as follows:
+## A typical run (for a CO2/CH4 setting) is as follows:
 
-    python ga_inverse_testlib_non-jupyter.py -c co2 -r "2" -lD "-12" -hD "-10" -lR "2" -hR "3" -g "100"
+    python ga_inverse_testlib_non-jupyter.py -c co2 -r "2" -lD "-10" -hD "-9" -lR "4" -hR "5" -g "100"
+
+    Among the solutions dFm_Be should appear, which is: 4.0	4.86	3.780
+
+## A typical run (for a O2/N2 setting) is as follows:
+    
+    python ga_inverse_testlib_non-jupyter.py -c o2 -r "2" -lD "-13" -hD "-11.5" -lR "1" -hR "2" -g "3000"
+    Among the solutions Cd-I-ZIF-7-8 should appear, which is: 48.0	4.438	5.996	3.78	4.25
+
+## A typical run (for a C3H6/C3H8 setting) is as follows:
+    
+    python ga_inverse_testlib_non-jupyter.py -c  -r "2" -lD "-13" -hD "-11.5" -lR "1" -hR "2" -g "3000"
+    Among the solutions ZIF-67 should appear, which is: 27.0	4.438	3.78
 
 ## Authors
 ### Publication
