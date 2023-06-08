@@ -38,6 +38,7 @@ import datetime
 #function to define the separation problem case
 #####
 def case(separation):
+    """The fields of the gene_space returned field are as follows: (0) MetalNum, (1) LinkerLength1 & (2) FuncLength1 """
     if separation == 'propylene':
         diameter_tuple = (np.array([4.03]), np.array([4.16]))
         mass_tuple = (np.array([42.08]), np.array([44.1]))
@@ -84,9 +85,9 @@ def case(separation):
 
         # TODO: Fix
         gene_space = [
-                [ 4,12,25,27,29,30,48],
-                [ 4.438, 4.86, 5.7, 6.01, 6.41],
-                [ 3.54, 3.78, 3.85,  4.093],
+                [ 4,12,25,27,29,30,48], # MetalNum
+                [ 4.438, 4.86, 5.7, 6.01, 6.41],  # LinkerLength
+                [ 3.54, 3.78, 3.85,  4.093], # FuncLength
             ]
         
     elif separation == 'o2':
@@ -135,11 +136,11 @@ def case(separation):
 
         # TODO: Fix
         gene_space =  [
-                    [ 4,12,25,27,29,30,48],
-                    [ 4.438, 4.86, 5.7, 6.01, 6.41],
-                    [ 4.438, 4.86, 5.7,5.996,6.01, 6.41],
-                    [ 3.54, 3.78, 3.85,  4.093],
-                    [2.278,2.7,3.54, 3.78, 3.85,  4.093,4.25]
+                    [ 4,12,25,27,29,30,48], # MetalNum
+                    [ 4.438, 4.86, 5.7, 6.01, 6.41], # LinkerLength1
+                    [ 4.438, 4.86, 5.7,5.996,6.01, 6.41], # LinkerLength3
+                    [ 3.54, 3.78, 3.85,  4.093], #FuncLength1
+                    [2.278,2.7,3.54, 3.78, 3.85,  4.093,4.25] #FuncLength3
                     ]
         
     if ((separation == 'propylene') or (separation == 'co2')):
