@@ -1,9 +1,7 @@
 #! /bin/env python
 # Import library
 from ga_inverse import *
-from ga_inverse_testlib_non_jupyter import my_fitness
 import argparse
-import sys
 
 # Command line parameters
 parser = argparse.ArgumentParser(
@@ -14,10 +12,10 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument('-c', '--case', choices=['co2','propylene', 'o2'], help='The gas used in the setting.', default='co2')
 parser.add_argument('-t', '--trainingDataFile', help='The (XLSX) datafile containing the training data.', default='./TrainData.xlsx')
-parser.add_argument('-lD', '--lowerD', help='TODO', type=float)
-parser.add_argument('-hD', '--higherD', help='TODO',type=float)
-parser.add_argument('-lR', '--lowerR', help='TODO',type=float)
-parser.add_argument('-hR', '--higherR', help='TODO',type=float)
+# parser.add_argument('-lD', '--lowerD', help='TODO', type=float)
+# parser.add_argument('-hD', '--higherD', help='TODO',type=float)
+# parser.add_argument('-lR', '--lowerR', help='TODO',type=float)
+# parser.add_argument('-hR', '--higherR', help='TODO',type=float)
 # parser.add_argument('-r', '--rounds', help='TODO',type=int, default=1)
 # parser.add_argument('-g', '--generations', help='TODO',type=int, default=100)
 parsed_args = parser.parse_args() # Actually parse
@@ -25,7 +23,6 @@ print("Using parameters:\n%s"%(str(parsed_args)))
 
 
 selected_case = parsed_args.case # You can choose among 'propylene', 'o2' and 'co2', which correspond to propylene/propane, o2/n2 and co2/ch4 mixtures, respectively
-separation = selected_case
 diameter_tuple, mass_tuple, ascF_tuple, kD_tuple, linker_length1, func1_length, metalNum, linker_length3, func3_length, GeneFieldNames, gene_space = case(selected_case)
 # num_generations = parsed_args.generations
 
@@ -78,21 +75,28 @@ for cur_linker_length1 in linker_length1_keys: #
                     solution_index +=1  # Update counter
 
                     # Solution format (from library comments)
-                    # ['MetalNum',  'linker_length1', 'linker_length2', 'linker_length3', 'func1_length', 'func2_length', 'func3_length']
-
-                    solution = [cur_metal_num, cur_linker_length1, cur_linker_length1, # Yes, it is the same, since linker1=linker2 in our setting
-                                 cur_linker_length3, cur_func1_length, cur_func1_length,
-                                  cur_func3_length # Yes, it is the same, since func1=func2 in our setting
-                                 ]
+                    # if ((separation == 'propylene') or (separation == 'co2')):
+                    #         gene_field_names = ['MetalNum','linker_length1','func1_length']
+                    #     else:
+                    #         gene_field_names = ['MetalNum','linker_length1','linker_length3', 'func1_length',
+                    #                                 'func3_length']                    
+                    if ((selected_case == 'propylene') or (selected_case == 'co2')):
+                        solution = [cur_metal_num, cur_linker_length1, cur_func1_length]
+                    elif (selected_case == 'o2'):
+                        solution = [cur_metal_num, cur_linker_length1, cur_linker_length3, cur_func1_length,cur_func3_length]
+                    else:
+                        raise RuntimeError('Invalid case (%s). Aborting...'%(selected_case))
                             
                     # Get the model output
                     estimated_gas1_diffusivity, estimated_gas2_diffusivity = estimate_diffusivities_from_solution(solution, 
-                                                                separation, diameter_tuple, mass_tuple, ascF_tuple, 
+                                                                selected_case, diameter_tuple, mass_tuple, ascF_tuple, 
                                                                 kD_tuple, metalNum, model, linker_length1, func1_length, 
                                                                 linker_length3=linker_length3, func3_length=func3_length
                                                                 )
                     ratio = estimated_gas1_diffusivity - estimated_gas2_diffusivity
-                    results.append([*solution, estimated_gas1_diffusivity, estimated_gas2_diffusivity, ratio])
+                    row = [*solution, estimated_gas1_diffusivity, estimated_gas2_diffusivity, ratio]
+                    print(str(row)) # Output
+                    results.append(row) # Append to results list
 # Print/save the result
 results_as_matrix = np.array(results)
 np.savetxt("results.csv", results_as_matrix, delimiter=",")
