@@ -42,19 +42,62 @@ model = train_model(training_x, training_y)
 # TODO: Keep the top N 
 
 # For every possible combination of the input parameters, get the expected logD of gas_i
-# TODO: implement with iterators
+# TODO: implement with iterators?
 
-for cur_linker_length1 in gene_space[1]: # <== Do it like this
-    for cur_func1_length in func1_length.keys():
-        if linker_length3 is None:
-                linker_length3 = linker_length1
-        if func3_length is None:
-            func3_length = func1_length
-            
-        for cur_linker_length3 in linker_length3.keys():
-            for cur_func3_length in func3_length.keys():
-                for curMetalNum in MetalNum.keys():            
-                    solution = [] # TODO: Complete
+# Common fields across cases
+linker_length1_keys = gene_space[1]
+# Differentiated fields per case
+if selected_case == 'o2':
+     metalNum_keys = gene_space[0]
+     linker_length3_keys = gene_space[2]
+     func1_length_keys = gene_space[3]
+     func3_length_keys = gene_space[4]
+elif selected_case == 'co2':
+     metalNum_keys = gene_space[0]
+     func1_length_keys = gene_space[2]
+elif selected_case == 'propylene':
+     metalNum_keys = gene_space[0]
+     func1_length_keys = gene_space[2]
+else:
+     raise RuntimeError("Invalid case type (%s). Aborting..."%(selected_case))
+
+# Update length3 and func3, if needed
+if linker_length3 is None:
+        linker_length3_keys = linker_length1_keys
+if func3_length is None:
+    func3_length_keys = func1_length_keys
+
+solution_index = 0 # Init counter
+results = [] # Init results list
+
+for cur_linker_length1 in linker_length1_keys: #
+    for cur_func1_length in func1_length_keys:            
+        for cur_linker_length3 in linker_length3_keys:
+            for cur_func3_length in func3_length_keys:
+                for cur_metal_num in metalNum_keys:
+                    solution_index +=1  # Update counter
+
+                    # Solution format (from library comments)
+                    # ['MetalNum',  'linker_length1', 'linker_length2', 'linker_length3', 'func1_length', 'func2_length', 'func3_length']
+
+                    solution = [cur_metal_num, cur_linker_length1, cur_linker_length1, # Yes, it is the same, since linker1=linker2 in our setting
+                                 cur_linker_length3, cur_func1_length, cur_func1_length,
+                                  cur_func3_length # Yes, it is the same, since func1=func2 in our setting
+                                 ]
+                            
+                    # Get the model output
+                    estimated_gas1_diffusivity, estimated_gas2_diffusivity = estimate_diffusivities_from_solution(solution, 
+                                                                separation, diameter_tuple, mass_tuple, ascF_tuple, 
+                                                                kD_tuple, metalNum, model, linker_length1, func1_length, 
+                                                                linker_length3=linker_length3, func3_length=func3_length
+                                                                )
+                    ratio = estimated_gas1_diffusivity - estimated_gas2_diffusivity
+                    results.append([*solution, estimated_gas1_diffusivity, estimated_gas2_diffusivity, ratio])
+# Print/save the result
+results_as_matrix = np.array(results)
+np.savetxt("results.csv", results_as_matrix, delimiter=",")
+
+# NOTES:
                     # # Here get all the values
                     # cur_linker_length1_values = linker_length1[cur_linker_length1]
                     # cur_linker_length3_values = linker_length3[cur_linker_length3]
@@ -93,11 +136,4 @@ for cur_linker_length1 in gene_space[1]: # <== Do it like this
                     # ionicRad = metalNumValues['ionicRad']
                     # #  'MetalMass': 9.012}                       
                     # MetalMass = metalNumValues['MetalMass']
-                            
-         solution = get_solution_from_gene_space()
-
-    # Get the model output
-    estimated_gas1_diffusivity, estimated_gas2_diffusivity = ga_fitness()
-    # Print/save the result
-
 
