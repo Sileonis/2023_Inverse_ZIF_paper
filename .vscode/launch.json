@@ -1,0 +1,17 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: non-jupiter run",
+            "type": "python",
+            "request": "launch",
+            "program": "ga_inverse_testlib_non-jupyter.py",
+            "args": ["-c", "co2", "-lD", "-12.6", "-hD", "-12.2", "-lR", "2", "-hR", "2.3"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ]
+}
