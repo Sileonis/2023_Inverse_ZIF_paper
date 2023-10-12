@@ -303,7 +303,7 @@ import scipy.interpolate
 def plot_pca_data(pca_df, title, randomized_order: bool, interpolated: bool, gas_name, number, trained_model_for_specific_gas, pca_obj, filename = None ):
     # Get exhaustive data values and limits
     exhaustive_search_data = get_exhaustive_search_data()
-    exhaustive_search_data_in_PCA_space = pca_obj.transform(get_complete_vectors((exhaustive_search_data), gas_name))
+    exhaustive_search_data_in_PCA_space = pca_obj.transform(get_complete_vectors((exhaustive_search_data), gas_name)[0]) # Use the vectors from get_complete_vectors (i.e. not the dataframe version)
 
     # Extract the PCA components as a 2D array
     pca_array = pca_df[['PC1', 'PC2']].values
@@ -341,45 +341,30 @@ def plot_pca_data(pca_df, title, randomized_order: bool, interpolated: bool, gas
     # cax = inset_axes(ax, width="3%", height="50%", bbox_to_anchor=(1.02, 0.1, 0.05, 0.8))
    
     
-    # Get the minimum and maximum values of the output_property for the interpolation range
-    min_output_property = output_property.min()
-    max_output_property = output_property.max() 
-
-
     # filling in the grid points with either interpolation or predictions from the trained ML model
-    if interpolated:
+    interp_X = np.linspace(min(exhaustive_search_data_in_PCA_space[:, 0]), max(exhaustive_search_data_in_PCA_space[:, 0]), num=500)
+    interp_Y = np.linspace(min(exhaustive_search_data_in_PCA_space[:, 1]), max(exhaustive_search_data_in_PCA_space[:, 1]), num=500)
+    if interpolated: # if we go with the training data only (i.e. not the prediction over all the space)
         # Perform the interpolation using the same range as the original points
         X = pca_array[:, 0]
         Y = pca_array[:, 1]
         Z = output_property
 
-        interp_X = np.linspace(min(X), max(X), num=500)
-        interp_Y = np.linspace(min(Y), max(Y), num=500)
-        gridX, gridY = np.meshgrid(interp_X, interp_Y)  # 2D grid to be filled either by interpolation OR ML predictions
-
-        interp = scipy.interpolate.LinearNDInterpolator(list(zip(X, Y)), Z)
-        interpZ = interp(gridX, gridY)
-    else:        
+    else: # if we go with prediction
         # For every instance of the exhaustive search space, predict the output
-        predicted_logD = trained_model_for_specific_gas.predict(exhaustive_search_data)
+        predicted_logD = trained_model_for_specific_gas.predict(get_complete_vectors(exhaustive_search_data, gas_name)[0]) # Use the vectors
         X = exhaustive_search_data_in_PCA_space[:, 0]
         Y = exhaustive_search_data_in_PCA_space[:, 1]
         Z = predicted_logD
-        # OBSOLETE: Transform the grid points back to the original feature space using the PCA inverse_transform function
-        # grid_points_in_original_space = pca_obj.inverse_transform(np.column_stack((gridX.ravel(), gridY.ravel())))
 
-        interp_X = np.linspace(min(X), max(X), num=500)
-        interp_Y = np.linspace(min(Y), max(Y), num=500)
-        gridX, gridY = np.meshgrid(interp_X, interp_Y)  # 2D grid to be filled either by interpolation OR ML predictions
+    # Also paint the known points
+    ax.scatter(X, Y, c=Z, cmap='coolwarm', s=10, linewidths=0.2, edgecolors='black') 
+    gridX, gridY = np.meshgrid(interp_X, interp_Y)  # 2D grid to be filled either by interpolation OR ML predictions
 
-        interp = scipy.interpolate.LinearNDInterpolator(list(zip(X, Y)), Z)
-        interpZ = interp(gridX, gridY)
+    interp = scipy.interpolate.LinearNDInterpolator(list(zip(X, Y)), Z)
+    interpZ = interp(gridX, gridY)
 
-        # Also paint the known points
-        scatterExhaustive = ax.scatter(X, Y, c=predicted_logD, cmap='coolwarm', s=10, linewidths=0.2, edgecolors='black')
- 
-
-    # Plot the interpolated heatmap
+    # Also paint heatmap
     heatmap = ax.imshow(interpZ, cmap='coolwarm', extent=[interp_X.min(), interp_X.max(), interp_Y.min(), interp_Y.max()], origin='lower')
     ax.set_aspect(2)
         
@@ -431,7 +416,7 @@ def run_n_plot(gas_name, order: bool, interpolation: bool, step= 20, output_dir=
     # Loop through each number in the list, which corresponds to a percentage of the training set
     for number in numbers_list:
         # Get the PCA data for the current number
-        pca_df, pca_obj = extract_pca_data_space(get_exhaustive_search_data(), "co2", get_trained_model("./TrainData.xlsx", OrderRandom, number))
+        pca_df, pca_obj = extract_pca_data_space(get_exhaustive_search_data(), gas_name, get_trained_model("./TrainData.xlsx", OrderRandom, number))
         
         trained_model = get_trained_model("./TrainData.xlsx", OrderRandom, number)
         # Generate and save the PCA plot for the current number
@@ -450,4 +435,4 @@ def run_n_plot(gas_name, order: bool, interpolation: bool, step= 20, output_dir=
         plot_pca_data(pca_df, f'{A}{B} - %{number} of original set', OrderRandom, Interpolation, gas_name, number, trained_model, pca_obj, filename)
 
 # %%
-run_n_plot("co2", True, False, 20, output_dir="output_data")
+run_n_plot("co2", True, True, 20, output_dir="output_data")
