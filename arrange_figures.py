@@ -3,7 +3,7 @@ import matplotlib.image as mpimg
 
 def arrange_figures(a_prefix, b_prefix, num_figures, output_filename="arranged_figures_ML.png", dpi=500):
     fig_width = 2.0  # Adjusting the figure width
-    fig_height = 0.8 * num_figures
+    fig_height = 0.6 * num_figures
     fig, axes = plt.subplots(num_figures, 2, figsize=(fig_width, fig_height), gridspec_kw={"hspace": 0.001, "wspace": 0.001})
 
     for i in range(1, num_figures + 1):

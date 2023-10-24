@@ -87,7 +87,7 @@ for cur_linker_length1 in linker_length1_keys: #
                                                                 linker_length3=linker_length3, func3_length=func3_length
                                                                 )
                     ratio = estimated_gas1_diffusivity - estimated_gas2_diffusivity
-                    row = [*solution, estimated_gas1_diffusivity, estimated_gas2_diffusivity, ratio]
+                    row = [solution, estimated_gas1_diffusivity, estimated_gas2_diffusivity, ratio]
                     print(str(row)) # Output
                     results.append(row) # Append to results list
 # Print/save the result

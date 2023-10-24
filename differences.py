@@ -106,7 +106,7 @@ def plot_differences(differences_dict, interpolation: str):
     plt.show()
 
 # Plot differences for Interpolated
-plot_differences({'Random': random_interpolated_diff, 'Researcher': researcher_interpolated_diff}, 'interpolated')
+# plot_differences({'Random': random_interpolated_diff, 'Researcher': researcher_interpolated_diff}, 'interpolated')
 
 # Plot differences for ML
-# plot_differences({'Random': random_ml_diff, 'Researcher': researcher_ml_diff}, 'ML')
+plot_differences({'Random': random_ml_diff, 'Researcher': researcher_ml_diff}, 'ML')

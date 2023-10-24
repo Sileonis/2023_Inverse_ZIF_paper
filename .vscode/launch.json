@@ -1,0 +1,52 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "PCA plots: random order, prediction based",
+            "type": "python",
+            "request": "launch",
+            "program": "PCA.py",
+            "args": ["-g", "co2", "-r"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "PCA plots: researcher order, prediction based",
+            "type": "python",
+            "request": "launch",
+            "program": "PCA.py",
+            "args": ["-g", "co2"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Inverse for CO2",
+            "type": "python",
+            "request": "launch",
+            "program": "ga_inverse_testlib_non_jupyter.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "-c",
+                "co2",
+                "-t",
+                "./TrainData.xlsx",
+                "-lD",
+                "-12",
+                "-hD",
+                "-10",
+                "-lR",
+                "2",
+                "-hr",
+                "3",
+                "-r",
+                "2",
+                "-g",
+                "100"
+            ]
+        }
+    ]
+}

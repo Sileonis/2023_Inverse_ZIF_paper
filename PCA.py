@@ -12,35 +12,16 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import random
 import os
+import argparse
 # from ga_inverse import *
 
 # %% [markdown]
 # # Create TypeList
 
 # %%
-datas = './TrainData.xlsx'
 
-df=pd.read_excel(datas)
-df['logD'] = np.log10(df['diffusivity'])
 
-df2=df[[ 'type', 'gas', 'aperture', 'MetalNum', 'MetalMass', 'size - van der Waals (Å)','mass', 'ascentricF', 'logD', 'size - kinetic diameter (Å)', 'ionicRad', 
-       'Μ-N_lff', 'Μ-N_kFF', 'MetalCharge',
-       'σ_1', 'e_1', 'linker_length1', 'linker_length2',
-       'linker_length3', 'linker_mass1', 'linker_mass2', 'linker_mass3',
-       'func1_length', 'func2_length', 'func3_length', 'func1_mass',  
-       'func2_mass', 'func3_mass', 'func1_charge', 'func2_charge',
-       'func3_charge']]
-
-df2=df2.rename(columns={'size - van der Waals (Å)':'diameter', 'size - kinetic diameter (Å)':'kdiameter', 'apertureAtom_e':'e' })
-
-df2 = df2.dropna()
-
-df2=df2.reset_index(drop=True)
-
-df2.type.unique()
-
-TypeList = df2.type.unique()
-TypeList
+# TypeList
 
 # Provided dictionaries
 linker_length1 = {
@@ -357,15 +338,21 @@ def plot_pca_data(pca_df, title, randomized_order: bool, interpolated: bool, gas
         Y = exhaustive_search_data_in_PCA_space[:, 1]
         Z = predicted_logD
 
+    minimum=-18
+    maximum=-8
+    # minimum=np.min(Z)
+    # maximum=np.max(Z)
+
     # Also paint the known points
-    ax.scatter(X, Y, c=Z, cmap='coolwarm', s=10, linewidths=0.2, edgecolors='black') 
+    ax.scatter(X, Y, c=Z, cmap='autumn', vmin=minimum, vmax=maximum, s=10, linewidths=0.2, edgecolors='black') 
     gridX, gridY = np.meshgrid(interp_X, interp_Y)  # 2D grid to be filled either by interpolation OR ML predictions
 
     interp = scipy.interpolate.LinearNDInterpolator(list(zip(X, Y)), Z)
     interpZ = interp(gridX, gridY)
 
+
     # Also paint heatmap
-    heatmap = ax.imshow(interpZ, cmap='coolwarm', extent=[interp_X.min(), interp_X.max(), interp_Y.min(), interp_Y.max()], origin='lower')
+    heatmap = ax.imshow(interpZ, cmap='autumn', vmin=minimum, vmax=maximum, extent=[interp_X.min(), interp_X.max(), interp_Y.min(), interp_Y.max()], origin='lower')
     ax.set_aspect(2)
         
     # cbar = plt.colorbar(heatmap, cax=cax, label='log$D$', aspect=1)
@@ -435,4 +422,38 @@ def run_n_plot(gas_name, order: bool, interpolation: bool, step= 20, output_dir=
         plot_pca_data(pca_df, f'{A}{B} - %{number} of original set', OrderRandom, Interpolation, gas_name, number, trained_model, pca_obj, filename)
 
 # %%
-run_n_plot("co2", True, True, 20, output_dir="output_data")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-g", "--gas", default="co2", help="co2/...")
+    parser.add_argument("-i", "--interpolation", default=False, action="store_true", help="True (without using the prediction model)/False (ML prediction as basis)")
+    parser.add_argument("-r", "--random_order", default=False, action="store_true", help="True (in random order)/False (Random)")
+    parser.add_argument("-s", "--step", type=int, default=20, help="The step of the percentage of the increase of data used.")
+    parser.add_argument("-o", "--output_dir", default="output_data")
+    args = parser.parse_args()
+
+    
+    datas = './TrainData.xlsx'
+
+    df=pd.read_excel(datas)
+    df['logD'] = np.log10(df['diffusivity'])
+
+    df2=df[[ 'type', 'gas', 'aperture', 'MetalNum', 'MetalMass', 'size - van der Waals (Å)','mass', 'ascentricF', 'logD', 'size - kinetic diameter (Å)', 'ionicRad', 
+        'Μ-N_lff', 'Μ-N_kFF', 'MetalCharge',
+        'σ_1', 'e_1', 'linker_length1', 'linker_length2',
+        'linker_length3', 'linker_mass1', 'linker_mass2', 'linker_mass3',
+        'func1_length', 'func2_length', 'func3_length', 'func1_mass',  
+        'func2_mass', 'func3_mass', 'func1_charge', 'func2_charge',
+        'func3_charge']]
+
+    df2=df2.rename(columns={'size - van der Waals (Å)':'diameter', 'size - kinetic diameter (Å)':'kdiameter', 'apertureAtom_e':'e' })
+
+    df2 = df2.dropna()
+
+    df2=df2.reset_index(drop=True)
+
+    df2.type.unique()
+
+    TypeList = df2.type.unique()
+
+    run_n_plot(gas_name="co2", interpolation=args.interpolation, order= args.random_order, step=args.step, output_dir=args.output_dir)
