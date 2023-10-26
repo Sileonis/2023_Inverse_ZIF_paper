@@ -17,3 +17,5 @@
 # /results.csv
 /.DS_store
 *.pyc
+*.png
+*.npy
