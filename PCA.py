@@ -63,6 +63,14 @@ MetalNum = {
 
 # %%
 
+def rand_jitter(arr):
+    stdev = .01 * (max(arr) - min(arr))
+    return arr + np.random.randn(len(arr)) * stdev
+
+def jitter(subplot, x, y, s=20, c='b', marker='o', cmap=None, norm=None, vmin=None, vmax=None, alpha=None, linewidths=None, verts=None, hold=None, **kwargs):
+    return subplot.scatter(rand_jitter(x), rand_jitter(y), s=s, c=c, marker=marker, cmap=cmap, norm=norm, vmin=vmin, vmax=vmax, alpha=alpha, linewidths=linewidths, **kwargs)
+
+
 def map_values(row):
     metal_num_info = MetalNum[row['MetalNum']]
     linker_info = linker_length1[row['linker_length1']]
@@ -173,7 +181,9 @@ def extract_pca_data_space(MOF_vectors, gas_name, trained_model_for_specific_gas
         'func1_length', 'func2_length', 'func3_length', 
         'func1_mass', 'func2_mass', 'func3_mass']]
 
-    X_scaled = StandardScaler().fit_transform(MOFs_only)
+    scaler = StandardScaler().fit(MOFs_only)
+    X_scaled = scaler.transform(MOFs_only)
+
     print("Number of NaN or infinite values in X_scaled:", np.sum(np.isnan(X_scaled)) + np.sum(np.isinf(X_scaled)))
     # new_df=get_complete_vectors(MOF_vectors, gas_name)[1]
     # duplicates_mask = new_df.duplicated()
@@ -215,7 +225,7 @@ def extract_pca_data_space(MOF_vectors, gas_name, trained_model_for_specific_gas
     # Concatenate the DataFrames along columns (axis=1)
     final_data = pd.concat([final_data_pca, final_data_output], axis=1)
 
-    return final_data, pca
+    return final_data, pca, scaler
     
 def get_trained_model(training_data, randomized_order: bool, perc=10):
     datas = training_data # './TrainData.xlsx'
@@ -299,7 +309,7 @@ def get_exhaustive_search_data():
 # %%
 import scipy.interpolate
 
-def plot_pca_data(pca_df, title, randomized_order: bool, interpolated: bool, gas_name, number, trained_model_for_specific_gas, pca_obj, filename = None ):
+def plot_pca_data(pca_df, title, randomized_order: bool, interpolated: bool, gas_name, number, trained_model_for_specific_gas, pca_obj, scaler, filename = None ):
     # Get exhaustive data values and limits
     exhaustive_search_data = get_exhaustive_search_data()
     MOFs_and_gas, _ = get_complete_vectors((exhaustive_search_data), gas_name)
@@ -319,7 +329,7 @@ def plot_pca_data(pca_df, title, randomized_order: bool, interpolated: bool, gas
     
     MOFs_only = MOFs_only.values
 
-    X_scaled = StandardScaler().fit_transform(MOFs_only)
+    X_scaled = scaler.transform(MOFs_only)
     
     exhaustive_search_data_in_PCA_space = pca_obj.transform(X_scaled) # Use the vectors from get_complete_vectors (i.e. not the dataframe version)
 
@@ -334,7 +344,8 @@ def plot_pca_data(pca_df, title, randomized_order: bool, interpolated: bool, gas
 
     # TODO: Remove?
     # Plot the scatter plot of PCA axes with larger point size and thin edge lines
-    scatter = ax.scatter(pca_array[:, 0], pca_array[:, 1], c=output_property, cmap='coolwarm', s=100, linewidths=0.2, edgecolors='black')
+    # DONE: Use jitter instead of scatter
+    scatter = jitter(ax, pca_array[:, 0], pca_array[:, 1], c=output_property, cmap='autumn', s=100, linewidths=0.2, edgecolors='black')
 
     # Set the labels and title
     plt.xlabel('Principal Component 1', fontsize=12)
@@ -383,7 +394,8 @@ def plot_pca_data(pca_df, title, randomized_order: bool, interpolated: bool, gas
     # maximum=np.max(Z)
 
     # Also paint the known points
-    ax.scatter(X, Y, c=Z, cmap='autumn', vmin=minimum, vmax=maximum, s=10, linewidths=0.5, edgecolors='black') 
+    # TODO: Use jitter instead of scatter
+    jitter(ax, X, Y, c=Z, cmap='autumn', vmin=minimum, vmax=maximum, s=10, linewidths=0.5, edgecolors='black') 
     gridX, gridY = np.meshgrid(interp_X, interp_Y)  # 2D grid to be filled either by interpolation OR ML predictions
 
     interp = scipy.interpolate.LinearNDInterpolator(list(zip(X, Y)), Z)
@@ -442,7 +454,7 @@ def run_n_plot(gas_name, order: bool, interpolation: bool, step= 20, output_dir=
     # Loop through each number in the list, which corresponds to a percentage of the training set
     for number in numbers_list:
         # Get the PCA data for the current number
-        pca_df, pca_obj = extract_pca_data_space(get_exhaustive_search_data(), gas_name, get_trained_model("./TrainData.xlsx", OrderRandom, number))
+        pca_df, pca_obj, scaler = extract_pca_data_space(get_exhaustive_search_data(), gas_name, get_trained_model("./TrainData.xlsx", OrderRandom, number))
         
         trained_model = get_trained_model("./TrainData.xlsx", OrderRandom, number)
         # Generate and save the PCA plot for the current number
@@ -458,7 +470,7 @@ def run_n_plot(gas_name, order: bool, interpolation: bool, step= 20, output_dir=
             B='Prediction'
         
         filename = f'{output_dir}/interpZ_values_{A}{B}_{number}.npy'
-        plot_pca_data(pca_df, f'{A}{B} - %{number} of original set', OrderRandom, Interpolation, gas_name, number, trained_model, pca_obj, filename)
+        plot_pca_data(pca_df, f'{A}{B} - %{number} of original set', OrderRandom, Interpolation, gas_name, number, trained_model, pca_obj, scaler, filename)
 
 # %%
 
