@@ -161,13 +161,27 @@ def extract_pca_data_space(MOF_vectors, gas_name, trained_model_for_specific_gas
     print("Number of NaN or infinite values in MOF_and_gas_vector:", np.sum(np.isnan(MOF_and_gas_vector)) + np.sum(np.isinf(MOF_and_gas_vector)))
 
     # Before applying PCA, add the following code to scale the data and check for NaN or infinite values again
-    X_scaled = StandardScaler().fit_transform(MOFs)
+    print(MOFs)
+    MOFs_only= MOFs[['ionicRad', 
+                    'MetalNum',
+                    'MetalMass',
+        'σ_1', 'e_1',
+        'σ_2', 'e_2',
+        'σ_3', 'e_3',
+        'linker_length1', 'linker_length2', 'linker_length3',
+        'linker_mass1', 'linker_mass2', 'linker_mass3',
+        'func1_length', 'func2_length', 'func3_length', 
+        'func1_mass', 'func2_mass', 'func3_mass']]
+
+    X_scaled = StandardScaler().fit_transform(MOFs_only)
     print("Number of NaN or infinite values in X_scaled:", np.sum(np.isnan(X_scaled)) + np.sum(np.isinf(X_scaled)))
-    new_df=get_complete_vectors(MOF_vectors, gas_name)[1]
-    duplicates_mask = new_df.duplicated()
-    print("Number of duplicates in MOF_and_gas_vector:", np.sum(duplicates_mask))   
+    # new_df=get_complete_vectors(MOF_vectors, gas_name)[1]
+    # duplicates_mask = new_df.duplicated()
+    # print("Number of duplicates in MOF_and_gas_vector:", np.sum(duplicates_mask))   
     # Apply PCA to the input data
-    X_scaled = StandardScaler().fit_transform(MOFs)
+    
+    # X_scaled = StandardScaler().fit_transform(MOFs) # !!!!!!!!!!!!!!!!!!!!!!
+    print(X_scaled)
     pca = PCA(n_components=2).fit(X_scaled)
     
    
@@ -182,12 +196,16 @@ def extract_pca_data_space(MOF_vectors, gas_name, trained_model_for_specific_gas
     print("Number of unique rows in MOF_and_gas_vector_in_PCA_space:", len(np.unique(MOF_and_gas_vector_in_PCA_space, axis=0)))
     print("Number of NaN or infinite values in MOF_and_gas_vector_in_PCA_space:", np.sum(np.isnan(MOF_and_gas_vector_in_PCA_space)) + np.sum(np.isinf(MOF_and_gas_vector_in_PCA_space)))
     print("First few rows of MOF_and_gas_vector_in_PCA_space:")
-    print(MOF_and_gas_vector_in_PCA_space[:5])
+    print(MOF_and_gas_vector_in_PCA_space)
     
     # Create DataFrame for PCA components
     final_data_pca = pd.DataFrame(columns=['PC1', 'PC2'])
     final_data_pca['PC1'] = MOF_and_gas_vector_in_PCA_space[:, 0]
     final_data_pca['PC2'] = MOF_and_gas_vector_in_PCA_space[:, 1]
+    print("I am printing final data pca")
+    print(final_data_pca)
+    print(pca.explained_variance_)
+    print(pca.explained_variance_ratio_)
 
     # Create DataFrame for predicted values
     final_data_output = pd.DataFrame(columns=['output'])
@@ -284,7 +302,26 @@ import scipy.interpolate
 def plot_pca_data(pca_df, title, randomized_order: bool, interpolated: bool, gas_name, number, trained_model_for_specific_gas, pca_obj, filename = None ):
     # Get exhaustive data values and limits
     exhaustive_search_data = get_exhaustive_search_data()
-    exhaustive_search_data_in_PCA_space = pca_obj.transform(get_complete_vectors((exhaustive_search_data), gas_name)[0]) # Use the vectors from get_complete_vectors (i.e. not the dataframe version)
+    MOFs_and_gas, _ = get_complete_vectors((exhaustive_search_data), gas_name)
+
+
+
+    MOFs_only= _[['ionicRad', 
+                    'MetalNum',
+                    'MetalMass',
+        'σ_1', 'e_1',
+        'σ_2', 'e_2',
+        'σ_3', 'e_3',
+        'linker_length1', 'linker_length2', 'linker_length3',
+        'linker_mass1', 'linker_mass2', 'linker_mass3',
+        'func1_length', 'func2_length', 'func3_length', 
+        'func1_mass', 'func2_mass', 'func3_mass']]
+    
+    MOFs_only = MOFs_only.values
+
+    X_scaled = StandardScaler().fit_transform(MOFs_only)
+    
+    exhaustive_search_data_in_PCA_space = pca_obj.transform(X_scaled) # Use the vectors from get_complete_vectors (i.e. not the dataframe version)
 
     # Extract the PCA components as a 2D array
     pca_array = pca_df[['PC1', 'PC2']].values
@@ -338,13 +375,15 @@ def plot_pca_data(pca_df, title, randomized_order: bool, interpolated: bool, gas
         Y = exhaustive_search_data_in_PCA_space[:, 1]
         Z = predicted_logD
 
+
+
     minimum=-18
     maximum=-8
     # minimum=np.min(Z)
     # maximum=np.max(Z)
 
     # Also paint the known points
-    ax.scatter(X, Y, c=Z, cmap='autumn', vmin=minimum, vmax=maximum, s=10, linewidths=0.2, edgecolors='black') 
+    ax.scatter(X, Y, c=Z, cmap='autumn', vmin=minimum, vmax=maximum, s=10, linewidths=0.5, edgecolors='black') 
     gridX, gridY = np.meshgrid(interp_X, interp_Y)  # 2D grid to be filled either by interpolation OR ML predictions
 
     interp = scipy.interpolate.LinearNDInterpolator(list(zip(X, Y)), Z)
@@ -427,7 +466,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-g", "--gas", default="co2", help="co2/...")
     parser.add_argument("-i", "--interpolation", default=False, action="store_true", help="True (without using the prediction model)/False (ML prediction as basis)")
-    parser.add_argument("-r", "--random_order", default=False, action="store_true", help="True (in random order)/False (Random)")
+    parser.add_argument("-r", "--random_order", default=True, action="store_true", help="True (in random order)/False (Random)")
     parser.add_argument("-s", "--step", type=int, default=20, help="The step of the percentage of the increase of data used.")
     parser.add_argument("-o", "--output_dir", default="output_data")
     args = parser.parse_args()
