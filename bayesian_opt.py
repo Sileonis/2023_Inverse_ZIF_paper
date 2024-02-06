@@ -38,11 +38,39 @@ def expected_improvement(x, trainLabels, model, best_y):
 
     return ei, x.iloc[np.argmax(ei)]['type']
 
+def plot_graph(frame1, label1 = '', label2 = '', on_off = 'False', x_min=0, x_max=75, y_min=0, y_max=10, 
+               size='16', line=2.5, edge=2, axes_width = 2, tickWidth = 2, tickLength=12, 
+            xLabel = '', yLabel ='', fileName = 'picture.png', marker_colors = ['g', 'r']):
+    # x = range(len(result_df))
+    x1 = frame1['sizeOfTrainingSet']
+    y1 = frame1['averageError']
+    error1 = frame1['stdErrorOfMeanError']
+
+    # plt.scatter(x, y)
+    plt.errorbar(x1, y1, yerr=error1, label=label1, ecolor='k', fmt='o', c=marker_colors[0], markersize=size, linewidth=line, markeredgecolor='k', markeredgewidth=edge)
+    # plt.yscale("log")
+    plt.xlabel(xLabel, fontsize=size)
+    plt.ylabel(yLabel, fontsize=size)
+    # plt.title('Mean absolute error with error bars', fontsize=18)
+    plt.rcParams["figure.figsize"] = (8,6)
+    plt.legend(loc='upper left', fontsize=15, frameon=on_off)
+
+    plt.tick_params(which='both', width=tickWidth)
+    plt.tick_params(which='major', length=tickLength)
+    plt.yticks(fontsize=size)
+    plt.xticks(fontsize=size)
+    plt.rcParams['axes.linewidth'] = axes_width
+
+    plt.xlim(x_min, x_max)
+    plt.ylim(y_min, y_max)
+
+    plt.savefig(fileName, bbox_inches='tight')
+    plt.show()
+
 def main():
     
     # Read the data
     data_from_file = readData()
-    # print(data_from_file)    
     
     # Train the surrogate model (Select Mean and Covariance Functions)
     Y = ["logD"]
@@ -57,12 +85,6 @@ def main():
     sortedData  = data_from_file.sort_values(X)
 
     uniqueZIFs = sortedData.type.unique()
-
-    # zif67Data = sortedData[sortedData['type'] == uniqueZIFs[np.where(uniqueZIFs=='ZIF-67')[0][0]]]
-    # beif1Data = sortedData[sortedData['type'] == uniqueZIFs[np.where(uniqueZIFs=='BeIF-1')[0][0]]]
-
-    sortedDataX = sortedData[X]
-    sortedDataY = sortedData[Y]
 
     XGBR = XGBRegressor(n_estimators=500, max_depth=5, eta=0.07, subsample=0.75, colsample_bytree=0.7, reg_lambda=0.4, reg_alpha=0.13,
                         n_jobs=6,
@@ -92,9 +114,6 @@ def main():
 
             if selectRandomSample:
                 # Sample 1 random ZIFs.
-                # TODO Experiment with different multitudes of randome sampling
-                print("Sampling 1 random ZIF.")
-
                 startingZIF  = np.random.choice(trainZIFnames, size=1, replace=False)[0]
                 selectedZIF  = trainZIFs[(trainZIFs['type'] == startingZIF)]
 
@@ -146,65 +165,10 @@ def main():
     result_df["stdErrorOfMeanError"] = [ np.array(maePerTrainSize[iCnt]).std() / math.sqrt(iCnt) for iCnt in maePerTrainSize.keys() ]
 
 
-
-            # sortedSampledX    = sortedSampledData[X]
-            # sortedSampledY    = sortedSampledData[Y]
-
-            # Train Surrogate Model
-            # gpr = GaussianProcessRegressor(random_state=0).fit(sortedSampledX.to_numpy(), sortedSampledY.to_numpy())
-
-
-            # # y_pred, y_std = gpr.predict(sortedDataX.to_numpy(), return_std=True)
-            # y_pred = XGBR.predict(sortedDataX.to_numpy())
-
-
-            # # Determine the point with the highest observed function value
-            # best_y = starting_data[Y].max()
-
-            # # Get an Acquisition Function in order to select the next sample
-            # # ei,maxIndex = expected_improvement(sortedDataX.to_numpy(), gpr, best_y.to_numpy())
-
-            # next_point = sortedDataX.to_numpy()[maxIndex]
-            # next_pointA = sortedData.iloc[maxIndex]
-
-            # sortedSampledData = pd.concat([sortedSampledData,next_pointA.to_frame().T])
-
-            # mae = metrics.mean_absolute_error(sortedDataY.to_numpy(), y_pred)
-            # print("Iteration " + str(i) + ": Mean Absolute Error: " + str(mae))
-
     plot_graph(result_df, 'Bayesian Optimization', '-', 'True',
              -1, 75, 0.5, 6.5, 18, 1.5, 2, 2, 2, 8,
              'Number of ZIFs in the training dataset', 'Mean absolute error of log$\it{D}$',
              'validation_DataSetSize.png', marker_colors=['r', 'g'])
-
-def plot_graph(frame1, label1 = '', label2 = '', on_off = 'False', x_min=0, x_max=75, y_min=0, y_max=10, 
-               size='16', line=2.5, edge=2, axes_width = 2, tickWidth = 2, tickLength=12, 
-            xLabel = '', yLabel ='', fileName = 'picture.png', marker_colors = ['g', 'r']):
-    # x = range(len(result_df))
-    x1 = frame1['sizeOfTrainingSet']
-    y1 = frame1['averageError']
-    error1 = frame1['stdErrorOfMeanError']
-
-    # plt.scatter(x, y)
-    plt.errorbar(x1, y1, yerr=error1, label=label1, ecolor='k', fmt='o', c=marker_colors[0], markersize=size, linewidth=line, markeredgecolor='k', markeredgewidth=edge)
-    # plt.yscale("log")
-    plt.xlabel(xLabel, fontsize=size)
-    plt.ylabel(yLabel, fontsize=size)
-    # plt.title('Mean absolute error with error bars', fontsize=18)
-    plt.rcParams["figure.figsize"] = (8,6)
-    plt.legend(loc='upper left', fontsize=15, frameon=on_off)
-
-    plt.tick_params(which='both', width=tickWidth)
-    plt.tick_params(which='major', length=tickLength)
-    plt.yticks(fontsize=size)
-    plt.xticks(fontsize=size)
-    plt.rcParams['axes.linewidth'] = axes_width
-
-    plt.xlim(x_min, x_max)
-    plt.ylim(y_min, y_max)
-
-    plt.savefig(fileName, bbox_inches='tight')
-    plt.show()
 
 
 if __name__ == "__main__":
