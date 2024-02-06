@@ -72,9 +72,7 @@ def main():
     # Read the data
     data_from_file = readData()
     
-    # Train the surrogate model (Select Mean and Covariance Functions)
     Y = ["logD"]
-    # X = [i for i in data_labels if i not in Y]
     X = ['diameter','mass','ascentricF', 'kdiameter','ionicRad',
          'MetalNum','MetalMass','σ_1', 'e_1',
          'linker_length1', 'linker_length2', 'linker_length3',
@@ -84,6 +82,7 @@ def main():
     
     sortedData  = data_from_file.sort_values(X)
 
+    # Make a list with all unique ZIF names.
     uniqueZIFs = sortedData.type.unique()
 
     XGBR = XGBRegressor(n_estimators=500, max_depth=5, eta=0.07, subsample=0.75, colsample_bytree=0.7, reg_lambda=0.4, reg_alpha=0.13,
@@ -107,10 +106,7 @@ def main():
         testZIFs  = sortedData[sortedData['type'] == testZIFname]
 
         currentData = pd.DataFrame()
-        sizeOfTrainData = 0
-        for trainZIFIndex in range(len(uniqueZIFs) - 1):
-
-            sizeOfTrainData += 1
+        for sizeOfTrainZIFs in range(len(uniqueZIFs) - 1):
 
             if selectRandomSample:
                 # Sample 1 random ZIFs.
@@ -149,13 +145,13 @@ def main():
 
             mae = metrics.mean_absolute_error(y_test, y_pred)
 
-            if sizeOfTrainData not in maePerTrainSize.keys():
-                maePerTrainSize[sizeOfTrainData] = []
+            if (sizeOfTrainZIFs + 1) not in maePerTrainSize.keys():
+                maePerTrainSize[(sizeOfTrainZIFs + 1)] = []
             
             # Append mae to the corresponding dictionary list
-            maePerTrainSize[sizeOfTrainData].append(mae)
+            maePerTrainSize[(sizeOfTrainZIFs + 1)].append(mae)
 
-            print("Number of ZIFs in Dataset: " + str(sizeOfTrainData))
+            print("Number of ZIFs in Dataset: " + str((sizeOfTrainZIFs + 1)))
             print("Mean Average Error: " + str(mae))
 
 
