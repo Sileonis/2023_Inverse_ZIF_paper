@@ -26,17 +26,28 @@ import matplotlib.pyplot as plt
 
 
 # Expected Improvement
-def expected_improvement(x, trainLabels, model, best_y):
+def expected_improvement(x, trainLabels, model, best_y, factor = 2.0):
     x_train = x[trainLabels].to_numpy()
 
     y_pred = model.predict(x_train)
 
     y_std  = y_pred.std()
 
-    z = np.divide(np.subtract(y_pred, best_y), y_std)
-    ei = (np.subtract(y_pred, best_y) * norm.cdf(z)) + (y_std * norm.pdf(z))
+    z = np.divide(np.subtract(y_pred, best_y + factor), y_std)
+    ei = (np.subtract(y_pred, best_y + factor) * norm.cdf(z)) + (y_std * norm.pdf(z))
 
     return ei, x.iloc[np.argmax(ei)]['type']
+
+def upperConfidenceBound(x, trainLabels, model, factor=2.0):
+    x_train = x[trainLabels].to_numpy()
+
+    y_pred = model.predict(x_train)
+
+    y_std  = y_pred.std()
+
+    ucb = y_pred + (factor * y_std)
+
+    return ucb, x.iloc[np.argmax(ucb)]['type']
 
 def plot_graph(frame1, label1 = '', label2 = '', on_off = 'False', x_min=0, x_max=75, y_min=0, y_max=10, 
                size='16', line=2.5, edge=2, axes_width = 2, tickWidth = 2, tickLength=12, 
@@ -119,8 +130,8 @@ def main():
 
                 selectRandomSample = False
             else:
-                # TODO Check the validity of the expected improvement function
-                ei,eiName = expected_improvement(trainZIFs, X, XGBR, best_y)
+                ei,eiName = expected_improvement(trainZIFs, X, XGBR, best_y,20)
+                # ei,eiName = upperConfidenceBound(trainZIFs, X, XGBR)
                 selectedZIF = trainZIFs[(trainZIFs['type'] == eiName)]
 
                 # Remove the sellected ZIF from the list of available for training
@@ -151,8 +162,8 @@ def main():
             # Append mae to the corresponding dictionary list
             maePerTrainSize[(sizeOfTrainZIFs + 1)].append(mae)
 
-            print("Number of ZIFs in Dataset: " + str((sizeOfTrainZIFs + 1)))
-            print("Mean Average Error: " + str(mae))
+            # print("Number of ZIFs in Dataset: " + str((sizeOfTrainZIFs + 1)))
+            # print("Mean Average Error: " + str(mae))
 
 
     result_df = pd.DataFrame()
