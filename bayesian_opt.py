@@ -6,23 +6,24 @@ from xgboost import XGBRegressor
 # Acquisition Function imports
 from scipy.stats import norm
 
-
 # Metric imports
 from sklearn import metrics
 import math
-
+import random
 
 # Data handling imports
 import numpy as np
 import pandas as pd
 
 
-
+# Code imports
 from ga_inverse import readData
 
 # Plot imports
-
 import matplotlib.pyplot as plt
+
+# File imports
+import os
 
 
 # Expected Improvement
@@ -33,38 +34,75 @@ def expected_improvement(x, trainLabels, model, best_y, factor = 2.0):
 
     y_std  = y_pred.std()
 
-    z = np.divide(np.subtract(y_pred, best_y + factor), y_std)
-    ei = (np.subtract(y_pred, best_y + factor) * norm.cdf(z)) + (y_std * norm.pdf(z))
+    # z = np.divide(np.subtract(y_pred, best_y + factor), y_std)
+    # ei = (np.subtract(y_pred, best_y + factor) * norm.cdf(z)) + (y_std * norm.pdf(z))
 
+    z = np.divide(np.subtract(best_y - factor, y_pred), y_std)
+    ei = (np.subtract(best_y - factor, y_pred + factor) * norm.cdf(z)) + (y_std * norm.pdf(z))
+
+
+    # Expeted Improvement Considering the mean score of a ZIF for all gasses.
+    x["expectedImprovement"] = ei.tolist()
+    allZIFs = x.type.unique()
+
+    # meanExpectedImprovement = {}
+    # for zif in allZIFs:
+    #     # meanExpectedImprovement[zif] = x[x['type'] == zif].expectedImprovement.sum() / len(x[x["type"] == zif])
+    #     meanExpectedImprovement[zif] = x[x['type'] == zif].expectedImprovement.sum()
+
+    # return ei, max(meanExpectedImprovement, key=meanExpectedImprovement.get)
+
+    # Expected Improvement Considering the gass as a zif feature
     return ei, x.iloc[np.argmax(ei)]['type']
 
-def upperConfidenceBound(x, trainLabels, model, factor=2.0):
-    x_train = x[trainLabels].to_numpy()
+# def upperConfidenceBound(x, trainLabels, model, factor=2.0):
+#     x_train = x[trainLabels].to_numpy()
 
-    y_pred = model.predict(x_train)
+#     y_pred = model.predict(x_train)
 
-    y_std  = y_pred.std()
+#     y_std  = y_pred.std()
 
-    ucb = y_pred + (factor * y_std)
+#     ucb = y_pred + (factor * y_std)
 
-    return ucb, x.iloc[np.argmax(ucb)]['type']
+#     return ucb, x.iloc[np.argmax(ucb)]['type']
 
-def plot_graph(frame1, label1 = '', label2 = '', on_off = 'False', x_min=0, x_max=75, y_min=0, y_max=10, 
+def plot_graph(frame1, frame2 = None, frame3 = None, label1 = '', label2 = '', label3 = '', on_off = 'False', x_min=0, x_max=75, y_min=0, y_max=10, 
                size='16', line=2.5, edge=2, axes_width = 2, tickWidth = 2, tickLength=12, 
             xLabel = '', yLabel ='', fileName = 'picture.png', marker_colors = ['g', 'r']):
+    
+    """ Create the LogD Mean (MAE) - Size of Training Dataset """
+    
     # x = range(len(result_df))
     x1 = frame1['sizeOfTrainingSet']
     y1 = frame1['averageError']
     error1 = frame1['stdErrorOfMeanError']
 
+    if frame2 is not None:
+        x2 = frame2['sizeOfTrainingSet']
+        y2 = frame2['averageError']
+        error2 = frame2['stdErrorOfMeanError']
+
+    if frame3 is not None:
+        x3 = frame3['sizeOfTrainingSet']
+        y3 = frame3['averageError']
+        error3 = frame3['stdErrorOfMeanError']
+
     # plt.scatter(x, y)
     plt.errorbar(x1, y1, yerr=error1, label=label1, ecolor='k', fmt='o', c=marker_colors[0], markersize=size, linewidth=line, markeredgecolor='k', markeredgewidth=edge)
+
+    if frame2 is not None:
+        plt.errorbar(x2, y2, yerr=error2, label=label2, ecolor='k', fmt='o', c=marker_colors[1], markersize=size, linewidth=line, markeredgecolor='k', markeredgewidth=edge)
+
+    if frame3 is not None:
+        plt.errorbar(x3, y3, yerr=error3, label=label3, ecolor='k', fmt='o', c=marker_colors[2], markersize=size, linewidth=line, markeredgecolor='k', markeredgewidth=edge)
+
+
     # plt.yscale("log")
     plt.xlabel(xLabel, fontsize=size)
     plt.ylabel(yLabel, fontsize=size)
     # plt.title('Mean absolute error with error bars', fontsize=18)
     plt.rcParams["figure.figsize"] = (8,6)
-    plt.legend(loc='upper left', fontsize=15, frameon=on_off)
+    plt.legend(loc='upper right', fontsize=15, frameon=on_off)
 
     plt.tick_params(which='both', width=tickWidth)
     plt.tick_params(which='major', length=tickLength)
@@ -78,8 +116,30 @@ def plot_graph(frame1, label1 = '', label2 = '', on_off = 'False', x_min=0, x_ma
     plt.savefig(fileName, bbox_inches='tight')
     plt.show()
 
-def main():
+def plotDataExists():
     
+    if not os.path.exists('random.csv'):
+        return False
+
+    if not os.path.exists('serial.csv'):
+        return False
+
+    if not os.path.exists('bo.csv'):
+        return False
+    
+    random_results = pd.read_csv('random.csv')
+    serial_results = pd.read_csv('serial.csv')
+    bo_results     = pd.read_csv('bo.csv')
+
+    plot_graph(bo_results,  random_results, serial_results, 'Bayesian Optimization', 'Random Order', 'Researcher Order' 'True',
+             -1, 75, 0.5, 6.5, 18, 1.5, 2, 2, 2, 8,
+             'Number of ZIFs in the training dataset', 'Mean absolute error of log$\it{D}$',
+             'validation_DataSetSize.png', marker_colors=['y','g','r'])
+
+    return True
+
+def bayesianOptimization():
+
     # Read the data
     data_from_file = readData()
     
@@ -102,10 +162,14 @@ def main():
                         random_state=6410
                         )
 
-    # Initialize dictionary of errors per training data size
-    maePerTrainSize = {}
+    # randomized_result_df = get_data_for_plot(XGBR, uniqueZIFs, sortedData, True, )
 
-    selectRandomSample = True
+    # randomized_result_df.to_csv("random.csv", index=False)
+
+    # Initialize dictionary of errors per training data size
+
+
+    maePerTrainSize = {}
     for leaveOutZifIndex in range(len(uniqueZIFs)):
         
         print("----------   Round " + str(leaveOutZifIndex + 1) + "     ----------")
@@ -116,6 +180,7 @@ def main():
         trainZIFs = sortedData[sortedData['type'] != testZIFname]
         testZIFs  = sortedData[sortedData['type'] == testZIFname]
 
+        selectRandomSample = True
         currentData = pd.DataFrame()
         for sizeOfTrainZIFs in range(len(uniqueZIFs) - 1):
 
@@ -130,7 +195,7 @@ def main():
 
                 selectRandomSample = False
             else:
-                ei,eiName = expected_improvement(trainZIFs, X, XGBR, best_y,20)
+                ei,eiName = expected_improvement(trainZIFs, X, XGBR, best_y,-1.0)
                 # ei,eiName = upperConfidenceBound(trainZIFs, X, XGBR)
                 selectedZIF = trainZIFs[(trainZIFs['type'] == eiName)]
 
@@ -152,7 +217,8 @@ def main():
 
             y_pred  = XGBR.predict(x_test)
 
-            best_y = np.max(y_pred)
+            # best_y = np.max(y_pred)
+            best_y = np.min(y_pred)
 
             mae = metrics.mean_absolute_error(y_test, y_pred)
 
@@ -162,8 +228,8 @@ def main():
             # Append mae to the corresponding dictionary list
             maePerTrainSize[(sizeOfTrainZIFs + 1)].append(mae)
 
-            # print("Number of ZIFs in Dataset: " + str((sizeOfTrainZIFs + 1)))
-            # print("Mean Average Error: " + str(mae))
+            print("Number of ZIFs in Dataset: " + str((sizeOfTrainZIFs + 1)))
+            print("Mean Average Error: " + str(mae))
 
 
     result_df = pd.DataFrame()
@@ -171,12 +237,19 @@ def main():
     result_df["averageError"] = [ np.array(maePerTrainSize[iCnt]).mean() for iCnt in maePerTrainSize.keys() ]
     result_df["stdErrorOfMeanError"] = [ np.array(maePerTrainSize[iCnt]).std() / math.sqrt(iCnt) for iCnt in maePerTrainSize.keys() ]
 
+    result_df.to_csv("bo.csv", index=False)
 
-    plot_graph(result_df, 'Bayesian Optimization', '-', 'True',
-             -1, 75, 0.5, 6.5, 18, 1.5, 2, 2, 2, 8,
-             'Number of ZIFs in the training dataset', 'Mean absolute error of log$\it{D}$',
-             'validation_DataSetSize.png', marker_colors=['r', 'g'])
-
+    return result_df
 
 if __name__ == "__main__":
-    main()
+   
+    bo_result = bayesianOptimization()
+
+    # bo_result      = pd.read_csv('bo.csv')
+    random_results = pd.read_csv('random.csv')
+    serial_results = pd.read_csv('serial.csv')
+
+    plot_graph(bo_result, random_results, serial_results, 'Bayesian Optimization', 'Random Order','Researcher Order', 'True',
+             -1, 75, 0.5, 6.5, 18, 1.5, 2, 2, 2, 8,
+             'Number of ZIFs in the training dataset', 'Mean absolute error of log$\it{D}$',
+             'validation_DataSetSize.png', marker_colors=['y', 'g', 'r'])
