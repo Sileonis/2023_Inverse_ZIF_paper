@@ -1,5 +1,7 @@
 # Surrogate model imports
 from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF
+from sklearn.gaussian_process.kernels import ConstantKernel
 
 from xgboost import XGBRegressor
 
@@ -28,15 +30,20 @@ import os
 
 # Expected Improvement
 def expected_improvement(x, trainLabels, model, best_y, factor = 2.0):
+
+    """ Function Computign The Expected Improvement Of All Data Points in a Dataset"""
+
     x_train = x[trainLabels].to_numpy()
 
-    y_pred = model.predict(x_train)
+    y_pred, y_std = model.predict(x_train, return_std=True)
+    # y_std  = y_pred.std()
 
-    y_std  = y_pred.std()
 
+    # Maximization Problem
     # z = np.divide(np.subtract(y_pred, best_y + factor), y_std)
     # ei = (np.subtract(y_pred, best_y + factor) * norm.cdf(z)) + (y_std * norm.pdf(z))
 
+    # Minimization Problem
     z = np.divide(np.subtract(best_y - factor, y_pred), y_std)
     ei = (np.subtract(best_y - factor, y_pred + factor) * norm.cdf(z)) + (y_std * norm.pdf(z))
 
@@ -47,57 +54,44 @@ def expected_improvement(x, trainLabels, model, best_y, factor = 2.0):
 
     # meanExpectedImprovement = {}
     # for zif in allZIFs:
-    #     # meanExpectedImprovement[zif] = x[x['type'] == zif].expectedImprovement.sum() / len(x[x["type"] == zif])
-    #     meanExpectedImprovement[zif] = x[x['type'] == zif].expectedImprovement.sum()
+    #     meanExpectedImprovement[zif] = x[x['type'] == zif].expectedImprovement.sum() / len(x[x["type"] == zif])
+
+    #     # Expected Improvement Considering The Sum of Scores for All Gasses
+    #     # meanExpectedImprovement[zif] = x[x['type'] == zif].expectedImprovement.sum()
 
     # return ei, max(meanExpectedImprovement, key=meanExpectedImprovement.get)
 
     # Expected Improvement Considering the gass as a zif feature
     return ei, x.iloc[np.argmax(ei)]['type']
 
-# def upperConfidenceBound(x, trainLabels, model, factor=2.0):
-#     x_train = x[trainLabels].to_numpy()
-
-#     y_pred = model.predict(x_train)
-
-#     y_std  = y_pred.std()
-
-#     ucb = y_pred + (factor * y_std)
-
-#     return ucb, x.iloc[np.argmax(ucb)]['type']
 
 def plot_graph(frame1, frame2 = None, frame3 = None, label1 = '', label2 = '', label3 = '', on_off = 'False', x_min=0, x_max=75, y_min=0, y_max=10, 
                size='16', line=2.5, edge=2, axes_width = 2, tickWidth = 2, tickLength=12, 
             xLabel = '', yLabel ='', fileName = 'picture.png', marker_colors = ['g', 'r']):
     
-    """ Create the LogD Mean (MAE) - Size of Training Dataset """
+    """ Plot the LogD Mean (MAE) - Size of Training Scores For up to Three Methods """
     
-    # x = range(len(result_df))
+    # First Method
     x1 = frame1['sizeOfTrainingSet']
     y1 = frame1['averageError']
     error1 = frame1['stdErrorOfMeanError']
+    plt.errorbar(x1, y1, yerr=error1, label=label1, ecolor='k', fmt='o', c=marker_colors[0], markersize=size, linewidth=line, markeredgecolor='k', markeredgewidth=edge)
 
+    # Second Method
     if frame2 is not None:
         x2 = frame2['sizeOfTrainingSet']
         y2 = frame2['averageError']
         error2 = frame2['stdErrorOfMeanError']
+        plt.errorbar(x2, y2, yerr=error2, label=label2, ecolor='k', fmt='o', c=marker_colors[1], markersize=size, linewidth=line, markeredgecolor='k', markeredgewidth=edge)
 
+    # Third Method
     if frame3 is not None:
         x3 = frame3['sizeOfTrainingSet']
         y3 = frame3['averageError']
         error3 = frame3['stdErrorOfMeanError']
-
-    # plt.scatter(x, y)
-    plt.errorbar(x1, y1, yerr=error1, label=label1, ecolor='k', fmt='o', c=marker_colors[0], markersize=size, linewidth=line, markeredgecolor='k', markeredgewidth=edge)
-
-    if frame2 is not None:
-        plt.errorbar(x2, y2, yerr=error2, label=label2, ecolor='k', fmt='o', c=marker_colors[1], markersize=size, linewidth=line, markeredgecolor='k', markeredgewidth=edge)
-
-    if frame3 is not None:
         plt.errorbar(x3, y3, yerr=error3, label=label3, ecolor='k', fmt='o', c=marker_colors[2], markersize=size, linewidth=line, markeredgecolor='k', markeredgewidth=edge)
 
 
-    # plt.yscale("log")
     plt.xlabel(xLabel, fontsize=size)
     plt.ylabel(yLabel, fontsize=size)
     # plt.title('Mean absolute error with error bars', fontsize=18)
@@ -118,6 +112,8 @@ def plot_graph(frame1, frame2 = None, frame3 = None, label1 = '', label2 = '', l
 
 def plotDataExists():
     
+    """ If Data Already Exists Plot Directly From Them """
+
     if not os.path.exists('random.csv'):
         return False
 
@@ -140,7 +136,8 @@ def plotDataExists():
 
 def bayesianOptimization():
 
-    # Read the data
+    """ Bayesian Optimization As A Method For Optimizing MAE of LogD """
+
     data_from_file = readData()
     
     Y = ["logD"]
@@ -161,14 +158,11 @@ def bayesianOptimization():
                         # nthread=6,
                         random_state=6410
                         )
+    
+    gp_model = GaussianProcessRegressor(kernel=ConstantKernel(1.0) * RBF(1.0))
 
-    # randomized_result_df = get_data_for_plot(XGBR, uniqueZIFs, sortedData, True, )
-
-    # randomized_result_df.to_csv("random.csv", index=False)
 
     # Initialize dictionary of errors per training data size
-
-
     maePerTrainSize = {}
     for leaveOutZifIndex in range(len(uniqueZIFs)):
         
@@ -181,7 +175,8 @@ def bayesianOptimization():
         testZIFs  = sortedData[sortedData['type'] == testZIFname]
 
         selectRandomSample = True
-        currentData = pd.DataFrame()
+        currentData   = pd.DataFrame()
+        currentRunMae = []
         for sizeOfTrainZIFs in range(len(uniqueZIFs) - 1):
 
             if selectRandomSample:
@@ -195,7 +190,7 @@ def bayesianOptimization():
 
                 selectRandomSample = False
             else:
-                ei,eiName = expected_improvement(trainZIFs, X, XGBR, best_y,-1.0)
+                ei,eiName = expected_improvement(trainZIFs, X, gp_model, minMae,0.0)
                 # ei,eiName = upperConfidenceBound(trainZIFs, X, XGBR)
                 selectedZIF = trainZIFs[(trainZIFs['type'] == eiName)]
 
@@ -218,9 +213,17 @@ def bayesianOptimization():
             y_pred  = XGBR.predict(x_test)
 
             # best_y = np.max(y_pred)
-            best_y = np.min(y_pred)
+            # best_y = np.min(y_pred)
 
             mae = metrics.mean_absolute_error(y_test, y_pred)
+            
+            for i in range(selectedZIF.shape[0]):
+                currentRunMae.append(mae)
+            
+            minMae = min(currentRunMae)
+
+            # Fit the Gaussian process model to the sampled points
+            gp_model.fit(x_train, np.array(currentRunMae))
 
             if (sizeOfTrainZIFs + 1) not in maePerTrainSize.keys():
                 maePerTrainSize[(sizeOfTrainZIFs + 1)] = []
