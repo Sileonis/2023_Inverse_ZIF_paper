@@ -2,11 +2,10 @@
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.gaussian_process.kernels import ConstantKernel
-
 from xgboost import XGBRegressor
 
-# Acquisition Function imports
-from scipy.stats import norm
+# Acquisition functions
+from acquisition_functions import expected_improvement
 
 # Metric imports
 from sklearn import metrics
@@ -17,59 +16,36 @@ import random
 import numpy as np
 import pandas as pd
 
-
 # Code imports
 from ga_inverse import readData
 
 # Plot imports
 import matplotlib.pyplot as plt
 
-# File imports
+# Filesystem imports
 import os
 
 
-# Expected Improvement
-def expected_improvement(x, trainLabels, model, best_y, factor = 2.0):
-
-    """ Function Computign The Expected Improvement Of All Data Points in a Dataset"""
-
-    x_train = x[trainLabels].to_numpy()
-
-    y_pred, y_std = model.predict(x_train, return_std=True)
-    # y_std  = y_pred.std()
-
-
-    # Maximization Problem
-    # z = np.divide(np.subtract(y_pred, best_y + factor), y_std)
-    # ei = (np.subtract(y_pred, best_y + factor) * norm.cdf(z)) + (y_std * norm.pdf(z))
-
-    # Minimization Problem
-    z = np.divide(np.subtract(best_y - factor, y_pred), y_std)
-    ei = (np.subtract(best_y - factor, y_pred + factor) * norm.cdf(z)) + (y_std * norm.pdf(z))
-
-
-    # Expeted Improvement Considering the mean score of a ZIF for all gasses.
-    x["expectedImprovement"] = ei.tolist()
-    allZIFs = x.type.unique()
-
-    # meanExpectedImprovement = {}
-    # for zif in allZIFs:
-    #     meanExpectedImprovement[zif] = x[x['type'] == zif].expectedImprovement.sum() / len(x[x["type"] == zif])
-
-    #     # Expected Improvement Considering The Sum of Scores for All Gasses
-    #     # meanExpectedImprovement[zif] = x[x['type'] == zif].expectedImprovement.sum()
-
-    # return ei, max(meanExpectedImprovement, key=meanExpectedImprovement.get)
-
-    # Expected Improvement Considering the gass as a zif feature
-    return ei, x.iloc[np.argmax(ei)]['type']
-
-
-def plot_graph(frame1, frame2 = None, frame3 = None, label1 = '', label2 = '', label3 = '', on_off = 'False', x_min=0, x_max=75, y_min=0, y_max=10, 
+def plot_logD_trainSize_perMethod(frame1, frame2 = None, frame3 = None, label1 = '', label2 = '', label3 = '', on_off = 'False', x_min=0, x_max=75, y_min=0, y_max=10, 
                size='16', line=2.5, edge=2, axes_width = 2, tickWidth = 2, tickLength=12, 
-            xLabel = '', yLabel ='', fileName = 'picture.png', marker_colors = ['g', 'r']):
+            xLabel = '', yLabel ='', fileName = 'picture.png', marker_colors = ['y', 'g', 'r']):
     
-    """ Plot the LogD Mean (MAE) - Size of Training Scores For up to Three Methods """
+    """ Plot the Mean (MAE) of logD (y-axis) to Size of Training Dataset (x-axis) for up to three methods 
+        frame1 - 3:     A dataframe containing the follwing Columns:
+                                                                    1.  sizeOfTrainingSet
+                                                                    2.  averageError
+                                                                    3.  stdErrorOfMeanError
+        label1 - 3:     The name of the respective method used.
+        on_off:         The value of frameon argument for pyplot.legend function.
+        x_min:          The minimum value of x-axis
+        x_max:          The maximum value of x-axis
+        y_min:          The minimum value of y-axis
+        y_max:          The maximum value of y-axis
+        xLabel:         The label of x-axis
+        yLabel:         The label of y-axis
+        fileName:       The name under which the plot will be saved.
+        marker_colors:  The colors that distinguish each method.
+        """
     
     # First Method
     x1 = frame1['sizeOfTrainingSet']
@@ -110,31 +86,17 @@ def plot_graph(frame1, frame2 = None, frame3 = None, label1 = '', label2 = '', l
     plt.savefig(fileName, bbox_inches='tight')
     plt.show()
 
-def plotDataExists():
-    
-    """ If Data Already Exists Plot Directly From Them """
+def plot_data_exists(data_path) -> bool:
 
-    if not os.path.exists('random.csv'):
+    """ Check wheather plot data already exist and return the respective truth value.
+        data_path1:     The path to look for the set of data."""
+
+    if not os.path.exists(data_path):
         return False
-
-    if not os.path.exists('serial.csv'):
-        return False
-
-    if not os.path.exists('bo.csv'):
-        return False
-    
-    random_results = pd.read_csv('random.csv')
-    serial_results = pd.read_csv('serial.csv')
-    bo_results     = pd.read_csv('bo.csv')
-
-    plot_graph(bo_results,  random_results, serial_results, 'Bayesian Optimization', 'Random Order', 'Researcher Order' 'True',
-             -1, 75, 0.5, 6.5, 18, 1.5, 2, 2, 2, 8,
-             'Number of ZIFs in the training dataset', 'Mean absolute error of log$\it{D}$',
-             'validation_DataSetSize.png', marker_colors=['y','g','r'])
 
     return True
 
-def bayesianOptimization():
+def bayesianOptimization() -> pd.DataFrame:
 
     """ Bayesian Optimization As A Method For Optimizing MAE of LogD """
 
@@ -245,14 +207,21 @@ def bayesianOptimization():
     return result_df
 
 if __name__ == "__main__":
-   
-    bo_result = bayesianOptimization()
 
-    # bo_result      = pd.read_csv('bo.csv')
-    random_results = pd.read_csv('random.csv')
-    serial_results = pd.read_csv('serial.csv')
+    if plot_data_exists('bo.csv'):
+        bo_result = pd.read_csv('bo.csv')
+    else:
+        bo_result = bayesianOptimization()
+    
+    random_results = None
+    if plot_data_exists('random.csv'):
+        random_results = pd.read_csv('random.csv')
 
-    plot_graph(bo_result, random_results, serial_results, 'Bayesian Optimization', 'Random Order','Researcher Order', 'True',
+    serial_results = None
+    if plot_data_exists('serial.csv'):
+        serial_results = pd.read_csv('serial.csv')
+
+    plot_logD_trainSize_perMethod(bo_result, random_results, serial_results, 'Bayesian Optimization', 'Random Order','Researcher Order', 'True',
              -1, 75, 0.5, 6.5, 18, 1.5, 2, 2, 2, 8,
              'Number of ZIFs in the training dataset', 'Mean absolute error of log$\it{D}$',
              'validation_DataSetSize.png', marker_colors=['y', 'g', 'r'])
