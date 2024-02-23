@@ -115,12 +115,13 @@ def bayesianOptimization() -> pd.DataFrame:
     # Make a list with all unique ZIF names.
     uniqueZIFs = sortedData.type.unique()
 
+    # Initiate an XGB regressor model
     XGBR = XGBRegressor(n_estimators=500, max_depth=5, eta=0.07, subsample=0.75, colsample_bytree=0.7, reg_lambda=0.4, reg_alpha=0.13,
                         n_jobs=6,
                         # nthread=6,
                         random_state=6410
                         )
-    
+    # Initiate a gaussian process model
     gp_model = GaussianProcessRegressor(kernel=ConstantKernel(1.0) * RBF(1.0))
 
 
@@ -138,7 +139,7 @@ def bayesianOptimization() -> pd.DataFrame:
 
         selectRandomSample = True
         currentData   = pd.DataFrame()
-        currentRunMae = []
+        currentBayesianMae = []
         for sizeOfTrainZIFs in range(len(uniqueZIFs) - 1):
 
             if selectRandomSample:
@@ -170,6 +171,37 @@ def bayesianOptimization() -> pd.DataFrame:
             x_test  = testZIFs[X].to_numpy()
             y_test  = testZIFs[Y].to_numpy()
 
+            # Bayesian Leave One Out
+            bayesianTrainLength = len(trainZIFs.type.unique())
+            if bayesianTrainLength > 1:
+                bayesianAverageMAE = 0
+                for excludedZifIndex in range(bayesianTrainLength):
+                    bayesianTrainZIFnames = np.delete(trainZIFs, excludedZifIndex)
+                    bayesianTestZIFname   = trainZIFs[leaveOutZifIndex]
+
+                    bayesianTrainZIFs = sortedData[sortedData['type'] != bayesianTrainZIFnames]
+                    bayesianTestZIF   = sortedData[sortedData['type'] == bayesianTestZIFname]
+
+                    bayesianX_train   = bayesianTrainZIFs[X].to_numpy()
+                    bayesianY_train   = bayesianTrainZIFs[Y].to_numpy()
+
+                    bayesianX_test    = bayesianTestZIF[X].to_numpy()
+                    bayesianY_test    = bayesianTestZIF[Y].to_numpy()
+
+                    XGBR.fit(bayesianX_train, bayesianY_train.ravel())
+
+                    bayesianY_pred    = XGBR.predict(bayesianX_test)
+
+                    bayesianAverageMAE += metrics.mean_absolute_error(bayesianY_test,bayesianY_pred)
+
+                bayesianAverageMAE /= bayesianTrainLength
+
+            for i in range(selectedZIF.shape[0]):
+                currentBayesianMae.append(bayesianAverageMAE)
+            
+            minMae = min(currentBayesianMae)
+
+            # Prediction on outer leave one out test data
             XGBR.fit(x_train, y_train.ravel())
 
             y_pred  = XGBR.predict(x_test)
@@ -178,14 +210,9 @@ def bayesianOptimization() -> pd.DataFrame:
             # best_y = np.min(y_pred)
 
             mae = metrics.mean_absolute_error(y_test, y_pred)
-            
-            for i in range(selectedZIF.shape[0]):
-                currentRunMae.append(mae)
-            
-            minMae = min(currentRunMae)
 
             # Fit the Gaussian process model to the sampled points
-            gp_model.fit(x_train, np.array(currentRunMae))
+            gp_model.fit(x_train, np.array(currentBayesianMae))
 
             if (sizeOfTrainZIFs + 1) not in maePerTrainSize.keys():
                 maePerTrainSize[(sizeOfTrainZIFs + 1)] = []
@@ -208,18 +235,22 @@ def bayesianOptimization() -> pd.DataFrame:
 
 if __name__ == "__main__":
 
-    if plot_data_exists('bo.csv'):
-        bo_result = pd.read_csv('bo.csv')
+    bayesianData = 'bo.csv'
+    randomData   = 'random.csv'
+    serialData   = 'serial.csv'
+
+    if plot_data_exists(bayesianData):
+        bo_result = pd.read_csv(bayesianData)
     else:
         bo_result = bayesianOptimization()
     
     random_results = None
-    if plot_data_exists('random.csv'):
-        random_results = pd.read_csv('random.csv')
+    if plot_data_exists(randomData):
+        random_results = pd.read_csv(randomData)
 
     serial_results = None
-    if plot_data_exists('serial.csv'):
-        serial_results = pd.read_csv('serial.csv')
+    if plot_data_exists(serialData):
+        serial_results = pd.read_csv(serialData)
 
     plot_logD_trainSize_perMethod(bo_result, random_results, serial_results, 'Bayesian Optimization', 'Random Order','Researcher Order', 'True',
              -1, 75, 0.5, 6.5, 18, 1.5, 2, 2, 2, 8,
