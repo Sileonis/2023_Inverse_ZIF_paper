@@ -15,7 +15,7 @@ class ExpectedImprovementCalculator(AcquisitionCalculator):
     
         
    # Expected Improvement
-   def expected_improvement(x, featureNames, model, best_y, factor = 2.0):
+   def expected_improvement(self, x, featureNames, model, best_y, factor = 2.0):
       """ Functionality of the Expected Improvement acquisition function.
          This function estimates how much will a data point improve a model if it is added next to the training dataset.
          Parameters:
