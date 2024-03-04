@@ -250,7 +250,8 @@ if __name__ == "__main__":
     if plot_data_exists(bayesianData):
         bo_result = pd.read_csv(bayesianData)
     else:
-        bo_result = bayesianOptimization()
+        zifs, featureNames, targetNames = data_preparation()
+        bo_result = bayesianOptimization(zifs, featureNames, targetNames)
     
     random_results = None
     if plot_data_exists(randomData):
