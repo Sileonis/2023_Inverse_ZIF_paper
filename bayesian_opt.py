@@ -180,14 +180,15 @@ def bayesianOptimization(zifs : pd.DataFrame, X_featureNames : list, Y_featureNa
             y_test  = testZIFs[Y_featureNames].to_numpy()
 
             # Bayesian Leave One Out
-            bayesianTrainLength = len(trainZIFs.type.unique())
+            trainZifNames = trainZIFs.type.unique()
+            bayesianTrainLength = len(trainZIFnames)
             if bayesianTrainLength > 1:
                 bayesianAverageMAE = 0
                 for excludedZifIndex in range(bayesianTrainLength):
-                    bayesianTrainZIFnames = np.delete(trainZIFs, excludedZifIndex)
-                    bayesianTestZIFname   = trainZIFs[leaveOutZifIndex]
+                    bayesianTrainZIFnames = np.delete(trainZifNames, excludedZifIndex)
+                    bayesianTestZIFname   = trainZifNames[excludedZifIndex]
 
-                    bayesianTrainZIFs = zifs[zifs['type'] != bayesianTrainZIFnames]
+                    bayesianTrainZIFs = zifs[zifs['type'] != bayesianTestZIFname]
                     bayesianTestZIF   = zifs[zifs['type'] == bayesianTestZIFname]
 
                     bayesianX_train   = bayesianTrainZIFs[X_featureNames].to_numpy()
