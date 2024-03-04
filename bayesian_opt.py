@@ -172,14 +172,8 @@ def bayesianOptimization(zifs : pd.DataFrame, X_featureNames : list, Y_featureNa
             # Add the next ZIF to the currently used data.
             currentData = pd.concat([currentData, selectedZIF], axis=0, ignore_index=True)
 
-            x_train = currentData[X_featureNames].to_numpy()
-            y_train = currentData[Y_featureNames].to_numpy()
 
-
-            x_test  = testZIFs[X_featureNames].to_numpy()
-            y_test  = testZIFs[Y_featureNames].to_numpy()
-
-            # Bayesian Leave One Out
+            # Leave One Out for Bayesian Optimization
             trainZifNames = trainZIFs.type.unique()
             bayesianTrainLength = len(trainZIFnames)
             if bayesianTrainLength > 1:
@@ -211,7 +205,14 @@ def bayesianOptimization(zifs : pd.DataFrame, X_featureNames : list, Y_featureNa
             minMae = min(currentBayesianMae)
 
             # Prediction on outer leave one out test data
-            XGBR.fit(x_train, y_train.ravel())
+            x_trainAll = currentData[X_featureNames].to_numpy()
+            y_trainAll = currentData[Y_featureNames].to_numpy()
+
+
+            x_test  = testZIFs[X_featureNames].to_numpy()
+            y_test  = testZIFs[Y_featureNames].to_numpy()
+
+            XGBR.fit(x_trainAll, y_trainAll.ravel())
 
             y_pred  = XGBR.predict(x_test)
 
@@ -221,7 +222,7 @@ def bayesianOptimization(zifs : pd.DataFrame, X_featureNames : list, Y_featureNa
             mae = metrics.mean_absolute_error(y_test, y_pred)
 
             # Fit the Gaussian process model to the sampled points
-            gp_model.fit(x_train, np.array(currentBayesianMae))
+            gp_model.fit(x_trainAll, np.array(currentBayesianMae))
 
             if (sizeOfTrainZIFs + 1) not in maePerTrainSize.keys():
                 maePerTrainSize[(sizeOfTrainZIFs + 1)] = []
