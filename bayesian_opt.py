@@ -5,7 +5,8 @@ from sklearn.gaussian_process.kernels import ConstantKernel
 from xgboost import XGBRegressor
 
 # Acquisition functions
-from acquisition_functions import expected_improvement
+from acquisition_functions import ExpectedImprovementCalculator
+from selection_strategy    import GreedySelectionStrategy
 
 # Metric imports
 from sklearn import metrics
@@ -96,9 +97,7 @@ def plot_data_exists(data_path) -> bool:
 
     return True
 
-def bayesianOptimization() -> pd.DataFrame:
-
-    """ Bayesian Optimization As A Method For Optimizing MAE of LogD """
+def data_preparation() -> list:
 
     data_from_file = readData()
     
@@ -110,10 +109,14 @@ def bayesianOptimization() -> pd.DataFrame:
          'func1_length', 'func2_length', 'func3_length', 
          'func1_mass', 'func2_mass', 'func3_mass']
     
-    sortedData  = data_from_file.sort_values(X)
+    return data_from_file, X, Y
+
+def bayesianOptimization(zifs : pd.DataFrame, X_featureNames : list, Y_featureNames : list) -> pd.DataFrame:
+
+    """ Bayesian Optimization As A Method For Optimizing MAE of LogD """
 
     # Make a list with all unique ZIF names.
-    uniqueZIFs = sortedData.type.unique()
+    uniqueZIFs = zifs.type.unique()
 
     # Initiate an XGB regressor model
     XGBR = XGBRegressor(n_estimators=500, max_depth=5, eta=0.07, subsample=0.75, colsample_bytree=0.7, reg_lambda=0.4, reg_alpha=0.13,
@@ -134,8 +137,8 @@ def bayesianOptimization() -> pd.DataFrame:
         trainZIFnames = np.delete(uniqueZIFs, leaveOutZifIndex)
         testZIFname   = uniqueZIFs[leaveOutZifIndex]
 
-        trainZIFs = sortedData[sortedData['type'] != testZIFname]
-        testZIFs  = sortedData[sortedData['type'] == testZIFname]
+        trainZIFs = zifs[zifs['type'] != testZIFname]
+        testZIFs  = zifs[zifs['type'] == testZIFname]
 
         selectRandomSample = True
         currentData   = pd.DataFrame()
@@ -153,8 +156,13 @@ def bayesianOptimization() -> pd.DataFrame:
 
                 selectRandomSample = False
             else:
-                ei,eiName = expected_improvement(trainZIFs, X, gp_model, minMae,0.0)
-                # ei,eiName = upperConfidenceBound(trainZIFs, X, XGBR)
+                # Calculate the expected improvement values for all candidate zifs
+                eiCalculator = ExpectedImprovementCalculator()
+                eI = eiCalculator.get_acquisition_function(trainZIFs, X_featureNames, gp_model, minMae,0.0)
+
+                # Select the next zif in a greedy manner
+                greedySelection = GreedySelectionStrategy()
+                eiName = greedySelection.select_next_instance(eI, trainZIFs)
                 selectedZIF = trainZIFs[(trainZIFs['type'] == eiName)]
 
                 # Remove the sellected ZIF from the list of available for training
@@ -164,12 +172,12 @@ def bayesianOptimization() -> pd.DataFrame:
             # Add the next ZIF to the currently used data.
             currentData = pd.concat([currentData, selectedZIF], axis=0, ignore_index=True)
 
-            x_train = currentData[X].to_numpy()
-            y_train = currentData[Y].to_numpy()
+            x_train = currentData[X_featureNames].to_numpy()
+            y_train = currentData[Y_featureNames].to_numpy()
 
 
-            x_test  = testZIFs[X].to_numpy()
-            y_test  = testZIFs[Y].to_numpy()
+            x_test  = testZIFs[X_featureNames].to_numpy()
+            y_test  = testZIFs[Y_featureNames].to_numpy()
 
             # Bayesian Leave One Out
             bayesianTrainLength = len(trainZIFs.type.unique())
@@ -179,14 +187,14 @@ def bayesianOptimization() -> pd.DataFrame:
                     bayesianTrainZIFnames = np.delete(trainZIFs, excludedZifIndex)
                     bayesianTestZIFname   = trainZIFs[leaveOutZifIndex]
 
-                    bayesianTrainZIFs = sortedData[sortedData['type'] != bayesianTrainZIFnames]
-                    bayesianTestZIF   = sortedData[sortedData['type'] == bayesianTestZIFname]
+                    bayesianTrainZIFs = zifs[zifs['type'] != bayesianTrainZIFnames]
+                    bayesianTestZIF   = zifs[zifs['type'] == bayesianTestZIFname]
 
-                    bayesianX_train   = bayesianTrainZIFs[X].to_numpy()
-                    bayesianY_train   = bayesianTrainZIFs[Y].to_numpy()
+                    bayesianX_train   = bayesianTrainZIFs[X_featureNames].to_numpy()
+                    bayesianY_train   = bayesianTrainZIFs[Y_featureNames].to_numpy()
 
-                    bayesianX_test    = bayesianTestZIF[X].to_numpy()
-                    bayesianY_test    = bayesianTestZIF[Y].to_numpy()
+                    bayesianX_test    = bayesianTestZIF[X_featureNames].to_numpy()
+                    bayesianY_test    = bayesianTestZIF[Y_featureNames].to_numpy()
 
                     XGBR.fit(bayesianX_train, bayesianY_train.ravel())
 
