@@ -140,13 +140,13 @@ def bayesianOptimization(zifs : pd.DataFrame, X_featureNames : list, Y_featureNa
         trainZIFs = zifs[zifs['type'] != testZIFname]
         testZIFs  = zifs[zifs['type'] == testZIFname]
 
-        selectRandomSample = True
+        selectRandomSample = 0
         currentData   = pd.DataFrame()
         currentBayesianMae = []
         for sizeOfTrainZIFs in range(len(uniqueZIFs) - 1):
 
-            if selectRandomSample:
-                # Sample 1 random ZIFs.
+            if selectRandomSample < 5:
+                # Sample 5 random ZIFs.
                 startingZIF  = np.random.choice(trainZIFnames, size=1, replace=False)[0]
                 selectedZIF  = trainZIFs[(trainZIFs['type'] == startingZIF)]
 
@@ -154,7 +154,7 @@ def bayesianOptimization(zifs : pd.DataFrame, X_featureNames : list, Y_featureNa
                 trainZIFs     = trainZIFs[(trainZIFs['type']) != startingZIF]
                 trainZIFnames = np.delete(trainZIFnames, np.where(trainZIFnames == startingZIF))
 
-                selectRandomSample = False
+                selectRandomSample += 1
             else:
                 # Calculate the expected improvement values for all candidate zifs
                 eiCalculator = ExpectedImprovementCalculator(factor=0)
