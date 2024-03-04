@@ -158,7 +158,7 @@ def bayesianOptimization(zifs : pd.DataFrame, X_featureNames : list, Y_featureNa
             else:
                 # Calculate the expected improvement values for all candidate zifs
                 eiCalculator = ExpectedImprovementCalculator(factor=0)
-                eI = eiCalculator.get_acquisition_function(trainZIFs, X_featureNames, gp_model, minMae,0.0)
+                eI = eiCalculator.get_acquisition_function(trainZIFs, X_featureNames, gp_model, minMae)
 
                 # Select the next zif in a greedy manner
                 greedySelection = GreedySelectionStrategy()
