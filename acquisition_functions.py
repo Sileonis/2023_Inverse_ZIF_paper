@@ -42,4 +42,4 @@ class ExpectedImprovementCalculator(AcquisitionCalculator):
       x["expectedImprovement"] = ei.tolist()
 
       # Expected Improvement Considering the gass as a zif feature
-      return ei, x.iloc[np.argmax(ei)]['type']
+      return ei
