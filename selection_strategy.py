@@ -8,7 +8,7 @@ class SelectionStrategy(ABC):
         pass
 
 class GreedySelectionStrategy(SelectionStrategy):
-    def __init__():
+    def __init__(self):
         pass
 
     def select_next_instance(self, acquisition_values : np.array, candidate_instances: pd.DataFrame):
