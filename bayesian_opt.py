@@ -176,6 +176,7 @@ def bayesianOptimization(zifs : pd.DataFrame, X_featureNames : list, Y_featureNa
             # Leave One Out for Bayesian Optimization
             currentBatchNames = currentData.type.unique()
             trainLength = len(currentBatchNames)
+            averageMAE = float('inf')
             if trainLength > 1:
                 averageMAE = 0
                 for excludedZifIndex in range(trainLength):
