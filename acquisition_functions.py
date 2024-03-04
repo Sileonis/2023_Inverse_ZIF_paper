@@ -25,9 +25,9 @@ class ExpectedImprovementCalculator(AcquisitionCalculator):
          best_y:      The best target value y found so far. (Could be minimum or maximum depending on the problem.)
          factor:      A factor used as a weight on the exploration-exploitation tradeoff."""
 
-      x_train = x[featureNames].to_numpy()
+      x_global = x[featureNames].to_numpy()
 
-      y_pred, y_std = model.predict(x_train, return_std=True)
+      y_pred, y_std = model.predict(x_global, return_std=True)
 
       # Maximization Problem
       # z = np.divide(np.subtract(y_pred, best_y + factor), y_std)
