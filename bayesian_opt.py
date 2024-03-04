@@ -174,33 +174,33 @@ def bayesianOptimization(zifs : pd.DataFrame, X_featureNames : list, Y_featureNa
 
 
             # Leave One Out for Bayesian Optimization
-            trainZifNames = trainZIFs.type.unique()
-            bayesianTrainLength = len(trainZIFnames)
-            if bayesianTrainLength > 1:
-                bayesianAverageMAE = 0
-                for excludedZifIndex in range(bayesianTrainLength):
-                    bayesianTrainZIFnames = np.delete(trainZifNames, excludedZifIndex)
-                    bayesianTestZIFname   = trainZifNames[excludedZifIndex]
+            currentBatchNames = currentData.type.unique()
+            trainLength = len(currentBatchNames)
+            if trainLength > 1:
+                averageMAE = 0
+                for excludedZifIndex in range(trainLength):
+                    trainBatchNames = np.delete(currentBatchNames, excludedZifIndex)
+                    testZifName   = currentBatchNames[excludedZifIndex]
 
-                    bayesianTrainZIFs = zifs[zifs['type'] != bayesianTestZIFname]
-                    bayesianTestZIF   = zifs[zifs['type'] == bayesianTestZIFname]
+                    trainBatchZIFs = zifs[zifs['type'] != testZifName]
+                    testBatchZIF   = zifs[zifs['type'] == testZifName]
 
-                    bayesianX_train   = bayesianTrainZIFs[X_featureNames].to_numpy()
-                    bayesianY_train   = bayesianTrainZIFs[Y_featureNames].to_numpy()
+                    x_batchTrain   = trainBatchZIFs[X_featureNames].to_numpy()
+                    y_batchTrain   = trainBatchZIFs[Y_featureNames].to_numpy()
 
-                    bayesianX_test    = bayesianTestZIF[X_featureNames].to_numpy()
-                    bayesianY_test    = bayesianTestZIF[Y_featureNames].to_numpy()
+                    x_batchTest    = testBatchZIF[X_featureNames].to_numpy()
+                    y_batchTest    = testBatchZIF[Y_featureNames].to_numpy()
 
-                    XGBR.fit(bayesianX_train, bayesianY_train.ravel())
+                    XGBR.fit(x_batchTrain, y_batchTrain.ravel())
 
-                    bayesianY_pred    = XGBR.predict(bayesianX_test)
+                    y_batchPred = XGBR.predict(x_batchTest)
 
-                    bayesianAverageMAE += metrics.mean_absolute_error(bayesianY_test,bayesianY_pred)
+                    averageMAE += metrics.mean_absolute_error(y_batchTest,y_batchPred)
 
-                bayesianAverageMAE /= bayesianTrainLength
+                averageMAE /= trainLength
 
             for i in range(selectedZIF.shape[0]):
-                currentBayesianMae.append(bayesianAverageMAE)
+                currentBayesianMae.append(averageMAE)
             
             minMae = min(currentBayesianMae)
 
