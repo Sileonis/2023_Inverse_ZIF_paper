@@ -89,15 +89,18 @@ class BayesianOptimization(OptimizationFactory):
                 # Add the next ZIF to the currently used data.
                 currentData = pd.concat([currentData, selectedZIF], axis=0, ignore_index=True)
 
+                # Create feature matrices for all currently used data.
+                x_trainAll = currentData[X_featureNames].to_numpy()
+                y_trainAll = currentData[Y_featureNames].to_numpy()
 
                 # Leave One Out for Bayesian Optimization
                 currentBatchNames = currentData.type.unique()
                 trainLength = len(currentBatchNames)
                 averageMAE = 100.0  # Temporary value denoting that train size 1 has a very large error.
-                if trainLength > 1:
+                minMae     = float('-inf')
+                if trainLength >= 5:
                     averageMAE = 0
                     for excludedZifIndex in range(trainLength):
-                        trainBatchNames = np.delete(currentBatchNames, excludedZifIndex)
                         testZifName   = currentBatchNames[excludedZifIndex]
 
                         trainBatchZIFs = zifs[zifs['type'] != testZifName]
@@ -116,16 +119,17 @@ class BayesianOptimization(OptimizationFactory):
                         averageMAE += metrics.mean_absolute_error(y_batchTest,y_batchPred)
 
                     averageMAE /= trainLength
+                    
+                    minMae = min(currentBayesianMae)
 
                 for i in range(selectedZIF.shape[0]):
                     currentBayesianMae.append(averageMAE)
-                
-                minMae = min(currentBayesianMae)
+
+                if trainLength >= 5:
+                    # Fit the Gaussian process model to the sampled points
+                    gp_model.fit(x_trainAll, np.array(currentBayesianMae))            
 
                 # Prediction on outer leave one out test data
-                x_trainAll = currentData[X_featureNames].to_numpy()
-                y_trainAll = currentData[Y_featureNames].to_numpy()
-
 
                 x_test  = testZIFs[X_featureNames].to_numpy()
                 y_test  = testZIFs[Y_featureNames].to_numpy()
@@ -139,17 +143,14 @@ class BayesianOptimization(OptimizationFactory):
 
                 mae = metrics.mean_absolute_error(y_test, y_pred)
 
-                # Fit the Gaussian process model to the sampled points
-                gp_model.fit(x_trainAll, np.array(currentBayesianMae))
-
                 if (sizeOfTrainZIFs + 1) not in maePerTrainSize.keys():
                     maePerTrainSize[(sizeOfTrainZIFs + 1)] = []
                 
                 # Append mae to the corresponding dictionary list
                 maePerTrainSize[(sizeOfTrainZIFs + 1)].append(mae)
 
-                print("Number of ZIFs in Dataset: " + str((sizeOfTrainZIFs + 1)))
-                print("Mean Absolute Error: " + str(mae))
+                logging.info("Number of ZIFs in Dataset: " + str((sizeOfTrainZIFs + 1)))
+                logging.info("Mean Absolute Error: " + str(mae))
 
 
         result_df = pd.DataFrame()
