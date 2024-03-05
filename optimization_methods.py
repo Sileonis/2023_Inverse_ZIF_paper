@@ -2,6 +2,7 @@
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.gaussian_process.kernels import ConstantKernel
+from sklearn.model_selection import KFold
 
 # Acquisition functions
 from acquisition_functions import ExpectedImprovementCalculator
@@ -17,6 +18,8 @@ import pandas as pd
 
 # Logging
 import logging
+
+from sklearn.model_selection import LeavePOut
 
 from abc import ABC
 
@@ -98,13 +101,24 @@ class BayesianOptimization(OptimizationFactory):
                 trainLength = len(currentBatchNames)
                 averageMAE = 100.0  # Temporary value denoting that train size 1 has a very large error.
                 minMae     = float('-inf')
+
+                # Trying KFold Method
                 if trainLength >= 5:
                     averageMAE = 0
-                    for excludedZifIndex in range(trainLength):
-                        testZifName   = currentBatchNames[excludedZifIndex]
+                    
+                    leaveOutNum = None
+                    if trainLength < 10:
+                        leaveOutNum = trainLength
+                    else:
+                        leaveOutNum = 10
 
-                        trainBatchZIFs = zifs[zifs['type'] != testZifName]
-                        testBatchZIF   = zifs[zifs['type'] == testZifName]
+                    kf = KFold(n_splits=leaveOutNum)
+                    for train_index, test_index in kf.split(currentBatchNames):
+                        # trainZifNames  = currentBatchNames[train_index]
+                        testZifNames   = currentBatchNames[test_index].tolist()
+
+                        trainBatchZIFs = zifs[~zifs['type'].isin(testZifNames)]
+                        testBatchZIF   = zifs[zifs['type'].isin(testZifNames)]
 
                         x_batchTrain   = trainBatchZIFs[X_featureNames].to_numpy()
                         y_batchTrain   = trainBatchZIFs[Y_featureNames].to_numpy()
@@ -121,6 +135,30 @@ class BayesianOptimization(OptimizationFactory):
                     averageMAE /= trainLength
                     
                     minMae = min(currentBayesianMae)
+
+                # if trainLength >= 5:
+                #     averageMAE = 0
+                #     for excludedZifIndex in range(trainLength):
+                #         testZifName   = currentBatchNames[excludedZifIndex]
+
+                #         trainBatchZIFs = zifs[zifs['type'] != testZifName]
+                #         testBatchZIF   = zifs[zifs['type'] == testZifName]
+
+                #         x_batchTrain   = trainBatchZIFs[X_featureNames].to_numpy()
+                #         y_batchTrain   = trainBatchZIFs[Y_featureNames].to_numpy()
+
+                #         x_batchTest    = testBatchZIF[X_featureNames].to_numpy()
+                #         y_batchTest    = testBatchZIF[Y_featureNames].to_numpy()
+
+                #         model.fit(x_batchTrain, y_batchTrain.ravel())
+
+                #         y_batchPred = model.predict(x_batchTest)
+
+                #         averageMAE += metrics.mean_absolute_error(y_batchTest,y_batchPred)
+
+                #     averageMAE /= trainLength
+                    
+                #     minMae = min(currentBayesianMae)
 
                 for i in range(selectedZIF.shape[0]):
                     currentBayesianMae.append(averageMAE)
