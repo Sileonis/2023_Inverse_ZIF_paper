@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 import logging
 import pandas as pd
 from ga_inverse import readData
@@ -33,7 +34,15 @@ def data_preparation() -> list:
 if __name__ == "__main__":
 
     # Logging Configuration 
-    logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.DEBUG)
+
+    logPath = os.path.join(os.curdir, 'logs')
+    if not os.path.exists(logPath):
+        os.makedirs(logPath)
+
+    logging.basicConfig(filename=os.path.join(logPath, datetime.now().strftime('Optimization_%d-%m-%Y-%H:%M.log')),
+                        filemode='a',
+                        format='%(asctime)s - %(message)s', 
+                        level=logging.DEBUG)
 
     bayesianData = 'bo.csv'
     randomData   = 'random.csv'
