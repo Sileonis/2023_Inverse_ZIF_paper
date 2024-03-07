@@ -17,10 +17,13 @@ def plot_data_exists(data_path) -> bool:
 
     return True
 
-def data_preparation() -> list:
+def data_preparation(sourceFile=None) -> list:
 
-    data_from_file = readData()
-    
+    if sourceFile is not None:
+        data_from_file = readData(sourceFile)
+    else:
+        data_from_file = readData()
+
     Y = ["logD"]
     X = ['diameter','mass','ascentricF', 'kdiameter','ionicRad',
          'MetalNum','MetalMass','σ_1', 'e_1',
@@ -53,7 +56,7 @@ if __name__ == "__main__":
     if plot_data_exists(bayesianData):
         bo_result = pd.read_csv(bayesianData)
     else:
-        zifs, featureNames, targetNames = data_preparation()
+        zifs, featureNames, targetNames = data_preparation("/home/vgkatsis/Desktop/INSANE/Projects/2023_Inverse_ZIF_paper/DataPerGas/H2.xlsx")
 
         # Instantiate the XGB regressor model
         XGBR = XGBRegressor(n_estimators=500, max_depth=5, eta=0.07, subsample=0.75, colsample_bytree=0.7, reg_lambda=0.4, reg_alpha=0.13,
