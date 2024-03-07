@@ -32,7 +32,7 @@ class BayesianOptimization(OptimizationFactory):
     def __init__(self):
         pass
 
-    def optimizeModel(self, model : any, zifs : pd.DataFrame, X_featureNames : list, Y_featureNames : list) -> pd.DataFrame:
+    def optimizeModel(self, model : any, zifs : pd.DataFrame, X_featureNames : list, Y_featureNames : list, logger : logging.Logger) -> pd.DataFrame:
 
         """ Bayesian Optimization As A Method For Optimizing MAE of LogD 
             model:              The model to be optimized.
@@ -52,7 +52,7 @@ class BayesianOptimization(OptimizationFactory):
         maePerTrainSize = {}
         for leaveOutZifIndex in range(len(uniqueZIFs)):
             
-            logging.info("----------   Round " + str(leaveOutZifIndex + 1) + "     ----------")
+            logger.info("----------   Round " + str(leaveOutZifIndex + 1) + "     ----------")
 
             trainZIFnames = np.delete(uniqueZIFs, leaveOutZifIndex)
             testZIFname   = uniqueZIFs[leaveOutZifIndex]
@@ -187,8 +187,8 @@ class BayesianOptimization(OptimizationFactory):
                 # Append mae to the corresponding dictionary list
                 maePerTrainSize[(sizeOfTrainZIFs + 1)].append(mae)
 
-                logging.info("Number of ZIFs in Dataset: " + str((sizeOfTrainZIFs + 1)))
-                logging.info("Mean Absolute Error: " + str(mae))
+                logger.info("Number of ZIFs in Dataset: " + str((sizeOfTrainZIFs + 1)))
+                logger.info("Mean Absolute Error: " + str(mae))
 
 
         result_df = pd.DataFrame()
