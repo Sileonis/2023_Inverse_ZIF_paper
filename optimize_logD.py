@@ -46,11 +46,6 @@ if __name__ == "__main__":
     fileHandler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
     logger.addHandler(fileHandler)
 
-    # logging.basicConfig(filename=os.path.join(logPath, datetime.now().strftime('Optimization_%d-%m-%Y-%H:%M.log')),
-    #                     filemode='a',
-    #                     format='%(asctime)s - %(message)s', 
-    #                     level=logging.DEBUG)
-
     bayesianData = 'bo.csv'
     randomData   = 'random.csv'
     serialData   = 'serial.csv'

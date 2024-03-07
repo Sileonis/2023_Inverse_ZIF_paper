@@ -136,30 +136,6 @@ class BayesianOptimization(OptimizationFactory):
                     
                     minMae = min(currentBayesianMae)
 
-                # if trainLength >= 5:
-                #     averageMAE = 0
-                #     for excludedZifIndex in range(trainLength):
-                #         testZifName   = currentBatchNames[excludedZifIndex]
-
-                #         trainBatchZIFs = zifs[zifs['type'] != testZifName]
-                #         testBatchZIF   = zifs[zifs['type'] == testZifName]
-
-                #         x_batchTrain   = trainBatchZIFs[X_featureNames].to_numpy()
-                #         y_batchTrain   = trainBatchZIFs[Y_featureNames].to_numpy()
-
-                #         x_batchTest    = testBatchZIF[X_featureNames].to_numpy()
-                #         y_batchTest    = testBatchZIF[Y_featureNames].to_numpy()
-
-                #         model.fit(x_batchTrain, y_batchTrain.ravel())
-
-                #         y_batchPred = model.predict(x_batchTest)
-
-                #         averageMAE += metrics.mean_absolute_error(y_batchTest,y_batchPred)
-
-                #     averageMAE /= trainLength
-                    
-                #     minMae = min(currentBayesianMae)
-
                 for i in range(selectedZIF.shape[0]):
                     currentBayesianMae.append(averageMAE)
 
