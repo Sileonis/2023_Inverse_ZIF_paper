@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 import logging
 import pandas as pd
+from statistical_tests import Statistical_Tests
 from ga_inverse import readData
 from xgboost import XGBRegressor
 from optimization_methods import BayesianOptimization
@@ -49,11 +50,10 @@ if __name__ == "__main__":
 
     # Create a specific results direcotry for this run of BO.
     curRunResultsPath = os.path.join(resultsPath,currDateTime)
-
+    os.mkdir(curRunResultsPath)
     if plot_data_exists(bayesianData):
         bo_result = pd.read_csv(bayesianData)
     else:
-        os.mkdir(curRunResultsPath)
 
         # Logging Configuration TODO Create a separate logger class.
         logger = logging.getLogger('BO_logger')
@@ -79,15 +79,21 @@ if __name__ == "__main__":
 
         bo_result.to_csv(os.path.join(curRunResultsPath,"bo.csv"), index=False)
     
+    pairedtTest = Statistical_Tests("pairedT")
+
     random_results = None
     if plot_data_exists(randomData):
         random_results = pd.read_csv(randomData)
+        test_result = pairedtTest.getTest(bo_result["averageError"].to_numpy(),random_results["averageError"].to_numpy())
+        print("P-Value of Paired T Test Between Bayesian Optimzation and Random Order: " + str(test_result.pvalue))
 
     serial_results = None
     if plot_data_exists(serialData):
         serial_results = pd.read_csv(serialData)
+        test_result = pairedtTest.getTest(bo_result["averageError"].to_numpy(),serial_results["averageError"].to_numpy())
+        print("P-Value of Paired T Test Between Bayesian Optimzation and Serial Order: " + str(test_result.pvalue))
 
     plot_logD_trainSize_perMethod(bo_result, random_results, serial_results, 'Bayesian Optimization', 'Random Order','Researcher Order', 'True',
              -1, 75, 0.5, 6.5, 18, 1.5, 2, 2, 2, 8,
              'Number of ZIFs in the training dataset', 'Mean absolute error of log$\it{D}$',
-             os.path.join(curRunResultsPath, "plot_LodD-#Training_Points.png"), marker_colors=['y', 'g', 'r'])
+             os.path.join(curRunResultsPath, "plot_LogD-#Training_Points.png"), marker_colors=['y', 'g', 'r'])
