@@ -36,18 +36,12 @@ def data_preparation(sourceFile=None) -> list:
 
 if __name__ == "__main__":
 
-    # Logging Configuration 
+    currDateTime = datetime.now().strftime('Optimization_%d-%m-%Y-%H:%M')
 
-    logPath = os.path.join(os.curdir, 'logs')
-    if not os.path.exists(logPath):
-        os.makedirs(logPath)
-
-    logger = logging.getLogger('BO_logger')
-    logger.setLevel(level=logging.DEBUG)
-
-    fileHandler  = logging.FileHandler(os.path.join(logPath, datetime.now().strftime('Optimization_%d-%m-%Y-%H:%M.log')))
-    fileHandler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
-    logger.addHandler(fileHandler)
+    # Create a directory to store the results of the experiments
+    resultsPath = os.path.join(os.curdir,"Experiments")
+    if not os.path.exists(resultsPath):
+        os.mkdir("Experiments")
 
     bayesianData = 'bo.csv'
     randomData   = 'random.csv'
@@ -56,6 +50,18 @@ if __name__ == "__main__":
     if plot_data_exists(bayesianData):
         bo_result = pd.read_csv(bayesianData)
     else:
+        # Create a specific results direcotry for this run of BO.
+        curRunResultsPath = os.path.join(resultsPath,currDateTime)
+        os.mkdir(curRunResultsPath)
+
+        # Logging Configuration TODO Create a separate logger class.
+        logger = logging.getLogger('BO_logger')
+        logger.setLevel(level=logging.DEBUG)
+
+        fileHandler  = logging.FileHandler(os.path.join(curRunResultsPath, currDateTime,".log"))
+        fileHandler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
+        logger.addHandler(fileHandler)
+
         zifs, featureNames, targetNames = data_preparation("/home/vgkatsis/Desktop/INSANE/Projects/2023_Inverse_ZIF_paper/DataPerGas/H2.xlsx")
 
         # Instantiate the XGB regressor model
@@ -69,6 +75,8 @@ if __name__ == "__main__":
 
         # Get the optimized model
         bo_result = bayesianOpt.optimizeModel(XGBR, zifs, featureNames, targetNames,logger)
+
+        bo_result.to_csv(os.path.join(curRunResultsPath,"bo.csv"), index=False)
     
     random_results = None
     if plot_data_exists(randomData):
@@ -78,8 +86,7 @@ if __name__ == "__main__":
     if plot_data_exists(serialData):
         serial_results = pd.read_csv(serialData)
 
-    logger.info("Plotting Results")
     plot_logD_trainSize_perMethod(bo_result, random_results, serial_results, 'Bayesian Optimization', 'Random Order','Researcher Order', 'True',
              -1, 75, 0.5, 6.5, 18, 1.5, 2, 2, 2, 8,
              'Number of ZIFs in the training dataset', 'Mean absolute error of log$\it{D}$',
-             'validation_DataSetSize.png', marker_colors=['y', 'g', 'r'])
+             'validation_DataSetSize.png', marker_colors=['y', 'g', 'r'], fileName=os.path.join(curRunResultsPath, "plot.png"))

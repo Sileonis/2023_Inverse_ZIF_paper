@@ -172,6 +172,4 @@ class BayesianOptimization(OptimizationFactory):
         result_df["averageError"] = [ np.array(maePerTrainSize[iCnt]).mean() for iCnt in maePerTrainSize.keys() ]
         result_df["stdErrorOfMeanError"] = [ np.array(maePerTrainSize[iCnt]).std() / math.sqrt(iCnt) for iCnt in maePerTrainSize.keys() ]
 
-        result_df.to_csv("bo.csv", index=False)
-
         return result_df
