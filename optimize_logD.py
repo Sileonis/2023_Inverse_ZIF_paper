@@ -47,18 +47,19 @@ if __name__ == "__main__":
     randomData   = 'random.csv'
     serialData   = 'serial.csv'
 
+    # Create a specific results direcotry for this run of BO.
+    curRunResultsPath = os.path.join(resultsPath,currDateTime)
+
     if plot_data_exists(bayesianData):
         bo_result = pd.read_csv(bayesianData)
     else:
-        # Create a specific results direcotry for this run of BO.
-        curRunResultsPath = os.path.join(resultsPath,currDateTime)
         os.mkdir(curRunResultsPath)
 
         # Logging Configuration TODO Create a separate logger class.
         logger = logging.getLogger('BO_logger')
         logger.setLevel(level=logging.DEBUG)
 
-        fileHandler  = logging.FileHandler(os.path.join(curRunResultsPath, currDateTime,".log"))
+        fileHandler  = logging.FileHandler(os.path.join(curRunResultsPath, currDateTime + ".log"))
         fileHandler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
         logger.addHandler(fileHandler)
 
