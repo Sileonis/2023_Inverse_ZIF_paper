@@ -90,4 +90,4 @@ if __name__ == "__main__":
     plot_logD_trainSize_perMethod(bo_result, random_results, serial_results, 'Bayesian Optimization', 'Random Order','Researcher Order', 'True',
              -1, 75, 0.5, 6.5, 18, 1.5, 2, 2, 2, 8,
              'Number of ZIFs in the training dataset', 'Mean absolute error of log$\it{D}$',
-             'validation_DataSetSize.png', marker_colors=['y', 'g', 'r'], fileName=os.path.join(curRunResultsPath, "plot.png"))
+             os.path.join(curRunResultsPath, "plot_LodD-#Training_Points.png"), marker_colors=['y', 'g', 'r'])
