@@ -37,7 +37,8 @@ def data_preparation(sourceFile=None) -> list:
 
 if __name__ == "__main__":
 
-    currDateTime = datetime.now().strftime('Optimization_%d-%m-%Y-%H:%M')
+    # currDateTime = datetime.now().strftime('Optimization_%d-%m-%Y-%H:%M')
+    currDateTime = datetime.now().strftime('Optimization_%d-%m-%Y-%H-%M') # modified for Windows env. from PanKrok
 
     # Create a directory to store the results of the experiments
     resultsPath = os.path.join(os.curdir,"Experiments")
