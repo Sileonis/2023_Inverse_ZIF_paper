@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+import argparse
 import logging
 import pandas as pd
 from statistical_tests import Statistical_Tests
@@ -37,6 +38,15 @@ def data_preparation(sourceFile=None) -> list:
 
 if __name__ == "__main__":
 
+    # Command line parameters
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-t', '--train',    help='A file containing the train data.', default='TrainData.xlsx')
+    parser.add_argument('-b', '--bayesian', help='A file containing the logD data acquired by adding zifs using the bayesian optimization mehtod.', default='bo.csv')
+    parser.add_argument('-r', '--random',   help='A file containing the logD data acquired by adding zifs in random order.', default='random.csv')
+    parser.add_argument('-s', '--serial',   help='A file containing the logD data acquired by adding zifs in a specific serial order.', default='serial.csv')
+    parsed_args = parser.parse_args() # Actually parse
+
     # currDateTime = datetime.now().strftime('Optimization_%d-%m-%Y-%H:%M')
     currDateTime = datetime.now().strftime('Optimization_%d-%m-%Y-%H-%M') # modified for Windows env. from PanKrok
 
@@ -45,9 +55,10 @@ if __name__ == "__main__":
     if not os.path.exists(resultsPath):
         os.mkdir("Experiments")
 
-    bayesianData = 'bo.csv'
-    randomData   = 'random.csv'
-    serialData   = 'serial.csv'
+    trainData    = parsed_args.train
+    bayesianData = parsed_args.bayesian
+    randomData   = parsed_args.random
+    serialData   = parsed_args.serial
 
     # Create a specific results direcotry for this run of BO.
     curRunResultsPath = os.path.join(resultsPath,currDateTime)
@@ -64,7 +75,7 @@ if __name__ == "__main__":
         fileHandler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
         logger.addHandler(fileHandler)
 
-        zifs, featureNames, targetNames = data_preparation("./DataPerGas/H2.xlsx")
+        zifs, featureNames, targetNames = data_preparation(trainData)
 
         # Instantiate the XGB regressor model
         XGBR = XGBRegressor(n_estimators=500, max_depth=5, eta=0.07, subsample=0.75, colsample_bytree=0.7, reg_lambda=0.4, reg_alpha=0.13,
