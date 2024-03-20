@@ -94,18 +94,23 @@ if __name__ == "__main__":
     pairedtTest = Statistical_Tests("pairedT")
 
     random_results = None
+    bo_v_random_stats = None
     if plot_data_exists(randomData):
         random_results = pd.read_csv(randomData)
-        test_result = pairedtTest.getTest(bo_result["averageError"].to_numpy(),random_results["averageError"].to_numpy())
-        print("P-Value of Paired T Test Between Bayesian Optimzation and Random Order: " + str(test_result.pvalue))
+        stat_test = pairedtTest.getTest(bo_result["averageError"].to_numpy(),random_results["averageError"].to_numpy())
+        bo_v_random_stats = {"pvalue": stat_test.pvalue, "statistic": stat_test.statistic}
+        print("P-Value of Paired T Test Between Bayesian Optimzation and Random Order: " + str(stat_test.pvalue))
+        print("Statistic Value: " + str(stat_test.statistic))
 
     serial_results = None
+    bo_v_serial_stats = None
     if plot_data_exists(serialData):
         serial_results = pd.read_csv(serialData)
-        test_result = pairedtTest.getTest(bo_result["averageError"].to_numpy(),serial_results["averageError"].to_numpy())
-        print("P-Value of Paired T Test Between Bayesian Optimzation and Serial Order: " + str(test_result.pvalue))
+        stat_test = pairedtTest.getTest(bo_result["averageError"].to_numpy(),serial_results["averageError"].to_numpy())
+        bo_v_serial_stats = {"pvalue": stat_test.pvalue, "statistic": stat_test.statistic}
+        print("P-Value of Paired T Test Between Bayesian Optimzation and Serial Order: " + str(stat_test.pvalue))
 
-    plot_logD_trainSize_perMethod(bo_result, random_results, serial_results, 'Bayesian Optimization', 'Random Order','Researcher Order', 'True',
+    plot_logD_trainSize_perMethod(bo_result, random_results, serial_results, bo_v_random_stats, bo_v_serial_stats, 'Bayesian Optimization', 'Random Order','Researcher Order', 'True',
              -1, 75, -0.5, 6.5, 18, 1.5, 2, 2, 2, 8,
              'Number of ZIFs in the training dataset', 'Mean absolute error of log$\it{D}$',
              os.path.join(curRunResultsPath, "plot_LogD-#Training_Points.png"), marker_colors=['y', 'g', 'r'])
