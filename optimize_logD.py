@@ -47,8 +47,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--serial',   help='A file containing the logD data acquired by adding zifs in a specific serial order.', default='serial.csv')
     parsed_args = parser.parse_args() # Actually parse
 
-    # currDateTime = datetime.now().strftime('Optimization_%d-%m-%Y-%H:%M')
-    currDateTime = datetime.now().strftime('Optimization_%d-%m-%Y-%H-%M') # modified for Windows env. from PanKrok
+    currDateTime = datetime.now().strftime('Optimization_%d-%m-%Y-%H-%M-%S.%f')[:-3]
 
     # Create a directory to store the results of the experiments
     resultsPath = os.path.join(os.curdir,"Experiments")
