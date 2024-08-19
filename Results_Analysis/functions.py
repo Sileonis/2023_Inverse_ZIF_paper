@@ -574,6 +574,8 @@ def plot_error_to_dataset_size(path :str):
     all_exp_results  = []
     all_exp_results_names = []
 
+    point_size = 10
+
     more_data = True
     while more_data:
 
@@ -637,7 +639,7 @@ def plot_error_to_dataset_size(path :str):
         results["sizeOfTrainingSet"] = results.index.astype(int)
 
         plot_optimization.plot_logD_trainSize_perMethod(frame1=results, label1=all_exp_results_names[0], on_off='True',
-                                        xLabel='Number of ZIFs in the training dataset', yLabel='Mean absolute error of logD Across Multiple Experiments',
+                                        size=point_size ,xLabel='Number of ZIFs in the training dataset', yLabel='Mean absolute error of logD Across Multiple Experiments',
                                         fileName=os.path.join(path, "plot_LogD-#Training_Points.png"), marker_colors=['y'])
     
     elif len(all_exp_results) == 2:
@@ -659,7 +661,7 @@ def plot_error_to_dataset_size(path :str):
         print("Statistic Value: " + str(stat_results.statistic))
 
         plot_optimization.plot_logD_trainSize_perMethod(frame1=results_0, frame2=results_1, label1=all_exp_results_names[0], method1_v_method2_stats=result_0_v_result_1, label2=all_exp_results_names[1], on_off='True',
-                                        xLabel='Number of ZIFs in the training dataset', yLabel='Mean absolute error of logD Across Multiple Experiments',
+                                        size=point_size ,xLabel='Number of ZIFs in the training dataset', yLabel='Mean absolute error of logD Across Multiple Experiments',
                                         fileName=os.path.join(path, "plot_LogD-#Training_Points.png"), marker_colors=['y','g'])
         
     elif len(all_exp_results) == 3:
@@ -692,7 +694,7 @@ def plot_error_to_dataset_size(path :str):
         print("Statistic Value: " + str(stat_results.statistic))
 
         plot_optimization.plot_logD_trainSize_perMethod(frame1=results_0, frame2=results_1, frame3=results_2, method1_v_method2_stats=result_0_v_result_1, method1_v_method3_stats=result_0_v_result_2 ,label1=all_exp_results_names[0], label2=all_exp_results_names[1], label3=all_exp_results_names[2], on_off='True',
-                                        xLabel='Number of ZIFs in the training dataset', yLabel='Mean absolute error of logD Across Multiple Experiments',
+                                        size=point_size ,xLabel='Number of ZIFs in the training dataset', yLabel='Mean absolute error of logD Across Multiple Experiments',
                                         fileName=os.path.join(path, "plot_LogD-#Training_Points.png"), marker_colors=['y','g','r'])
     
     else:
