@@ -35,11 +35,11 @@ class BayesianOptimization(OptimizationFactory):
         self.logger = logger
         self.logPrefix = "Bayesian Optimization"
 
-    def optimizeModel(self, model : any, zifs : pd.DataFrame, X_featureNames : list, Y_featureNames : list , designspace_thres : int, bo_selection : str, save_path : str) -> pd.DataFrame:
+    def optimizeModel(self, model : any, materials : pd.DataFrame, X_featureNames : list, Y_featureNames : list , designspace_thres : int, bo_selection : str, save_path : str) -> pd.DataFrame:
 
         """ Bayesian Optimization As A Method For Optimizing MAE of LogD 
             model:              The model to be optimized.
-            zifs :              The data used during optimization.
+            zifs :              The material data used during optimization.
             X_featureNames:     The names of the training features.
             Y_featureNames:     The names of the target features.
         """
@@ -59,7 +59,7 @@ class BayesianOptimization(OptimizationFactory):
         total_kfold_elapsed_time = 0.0
 
         # Make a list with all unique ZIF names.
-        uniqueZIFs = zifs.type.unique()
+        uniqueZIFs = materials.type.unique()
 
         # Initialize dictionary of errors per training data size
 
@@ -96,8 +96,8 @@ class BayesianOptimization(OptimizationFactory):
             trainZIFnames = np.delete(uniqueZIFs, left_out_zif_indicies)
             testZIFname   = uniqueZIFs[left_out_zif_indicies]
 
-            trainZIFs = zifs[~zifs['type'].isin(testZIFname)]
-            testZIFs  = zifs[zifs['type'].isin(testZIFname)]
+            trainZIFs = materials[~materials['type'].isin(testZIFname)]
+            testZIFs  = materials[materials['type'].isin(testZIFname)]
 
             selectRandomSample = 0
             currentData   = pd.DataFrame()
@@ -177,8 +177,8 @@ class BayesianOptimization(OptimizationFactory):
                         trainZifNames  = currentBatchNames[train_index].tolist()
                         testZifNames   = currentBatchNames[test_index].tolist()
 
-                        trainBatchZIFs = zifs[zifs['type'].isin(trainZifNames)]
-                        testBatchZIF   = zifs[zifs['type'].isin(testZifNames)]
+                        trainBatchZIFs = materials[materials['type'].isin(trainZifNames)]
+                        testBatchZIF   = materials[materials['type'].isin(testZifNames)]
 
                         x_batchTrain   = trainBatchZIFs[X_featureNames].to_numpy()
                         y_batchTrain   = trainBatchZIFs[Y_featureNames].to_numpy()
@@ -301,7 +301,7 @@ class RandomOptimization(OptimizationFactory):
         self.logger = logger
         self.logPrefix = "Random Optimization"
     
-    def optimizeModel(self, model : any, zifs : pd.DataFrame, X_featureNames : list, Y_featureNames : list , designspace_thres : int, bo_selection : str, save_path : str) -> pd.DataFrame:
+    def optimizeModel(self, model : any, materials : pd.DataFrame, X_featureNames : list, Y_featureNames : list , designspace_thres : int, bo_selection : str, save_path : str) -> pd.DataFrame:
 
         """ Random Optimization As A Method For Optimizing MAE of LogD 
             model:              The model to be optimized.
@@ -311,7 +311,7 @@ class RandomOptimization(OptimizationFactory):
         """
         optimization_start_time = time.time()
         # Make a list with all unique ZIF names.
-        uniqueZIFs = zifs.type.unique()
+        uniqueZIFs = materials.type.unique()
 
         # Count the total number that the kfold process takes in seconds
         total_kfold_elapsed_time = 0.0
@@ -352,8 +352,8 @@ class RandomOptimization(OptimizationFactory):
             trainZIFnames = np.delete(uniqueZIFs, left_out_zif_indicies)
             testZIFname   = uniqueZIFs[left_out_zif_indicies]
 
-            trainZIFs = zifs[~zifs['type'].isin(testZIFname)]
-            testZIFs  = zifs[zifs['type'].isin(testZIFname)]
+            trainZIFs = materials[~materials['type'].isin(testZIFname)]
+            testZIFs  = materials[materials['type'].isin(testZIFname)]
 
             selectRandomSample = 0
             currentData   = pd.DataFrame()
@@ -472,7 +472,7 @@ class SerialOptimization(OptimizationFactory):
         self.logger = logger
         self.logPrefix = "Serial Optimization"
     
-    def optimizeModel(self, model : any, zifs : pd.DataFrame, X_featureNames : list, Y_featureNames : list , designspace_thres : int, bo_selection : str, save_path : str) -> pd.DataFrame:
+    def optimizeModel(self, model : any, materials : pd.DataFrame, X_featureNames : list, Y_featureNames : list , designspace_thres : int, bo_selection : str, save_path : str) -> pd.DataFrame:
 
         """ Serial Optimization As A Method For Optimizing MAE of LogD 
             model:              The model to be optimized.
@@ -482,7 +482,7 @@ class SerialOptimization(OptimizationFactory):
         """
         optimization_start_time = time.time()
         # Make a list with all unique ZIF names.
-        uniqueZIFs = zifs.type.unique()
+        uniqueZIFs = materials.type.unique()
 
         # Count the total number that the kfold process takes in seconds
         total_kfold_elapsed_time = 0.0
@@ -522,8 +522,8 @@ class SerialOptimization(OptimizationFactory):
             trainZIFnames = np.delete(uniqueZIFs, left_out_zif_indicies)
             testZIFname   = uniqueZIFs[left_out_zif_indicies]
 
-            trainZIFs = zifs[~zifs['type'].isin(testZIFname)]
-            testZIFs  = zifs[zifs['type'].isin(testZIFname)]
+            trainZIFs = materials[~materials['type'].isin(testZIFname)]
+            testZIFs  = materials[materials['type'].isin(testZIFname)]
 
             selectRandomSample = 0
             currentData   = pd.DataFrame()
