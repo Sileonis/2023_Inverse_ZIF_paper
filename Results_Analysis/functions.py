@@ -699,3 +699,144 @@ def plot_error_to_dataset_size(path :str):
     
     else:
         print("Method is implemented for up to three types of experiments.")
+    
+
+def test_top100_mofs_prediction(results_path: str):
+    
+
+    dataset_per_size = {}
+
+    print("Insert the path to the design space data.")
+    design_space_path = input()
+
+    design_space = pd.read_csv(design_space_path)
+    design_space = design_space.rename(columns={' absolute methane uptake high P [v STP/v]':'methane_uptake', ' name':'type'})        
+
+    Y = ['methane_uptake']
+    X = ['dimensions', ' supercell volume [A^3]', ' density [kg/m^3]',
+         ' surface area [m^2/g]', ' num carbon', ' num hydrogen',
+         ' num nitrogen', ' num oxygen', ' num sulfur', ' num silicon',
+         ' vertices', ' edges', ' genus', ' largest included sphere diameter [A]',
+         ' largest free sphere diameter [A]', ' largest included sphere along free sphere path diameter [A]']
+
+    for experimentFile in os.listdir(results_path):
+
+        # Skip non-directory files
+        if not os.path.isdir(os.path.join(results_path, experimentFile)):
+            continue
+
+        experimentPath = os.path.join(results_path, experimentFile)
+            
+        for content in os.listdir(experimentPath):
+
+            if ".log" in content:
+                with open(os.path.join(experimentPath, content), 'r') as log_file:
+
+                    curr_dataset_size = None
+
+                    for log in log_file:
+
+                        if "Round" in log and "to file" not in log:
+                            curr_dataset_size = 0
+                        
+                        if "Selected" in log:
+                            curr_dataset_size += 1
+
+                            # Initialize dataset_per_size dictionary if necessary    
+                            
+                            if curr_dataset_size == 1:
+                            
+                                if curr_dataset_size not in dataset_per_size:
+
+                                    dataset_per_size[curr_dataset_size] = {1: {"materials":     [],
+                                                                               "top100_names":  [],
+                                                                               "top100_uptake": [],}}
+
+                                else:
+                                    instances_of_dataset_size = len(dataset_per_size[curr_dataset_size].keys())
+                                    dataset_per_size[curr_dataset_size][instances_of_dataset_size + 1] = {"materials":     [],
+                                                                                                          "top100_names":  [],
+                                                                                                          "top100_uptake": [],}
+                            else:
+                                instances_of_prev_dataset_size = len(dataset_per_size[curr_dataset_size - 1].keys())
+                                if curr_dataset_size not in dataset_per_size:
+                                    dataset_per_size[curr_dataset_size] = {instances_of_prev_dataset_size: {}}
+                                else:
+                                    dataset_per_size[curr_dataset_size][instances_of_prev_dataset_size] = {}
+                                
+                                dataset_per_size[curr_dataset_size][instances_of_prev_dataset_size] = {"materials":     dataset_per_size[curr_dataset_size - 1][instances_of_prev_dataset_size]["materials"].copy(),
+                                                                                                       "top100_names":  [],
+                                                                                                       "top100_uptake": []}
+
+                            # Insert new material in coresponding position
+                            material_name = log.split(": ")[1].strip("\n")
+                            
+                            instances_of_dataset_size = len(dataset_per_size[curr_dataset_size].keys())
+                            dataset_per_size[curr_dataset_size][instances_of_dataset_size]["materials"].append(material_name)
+
+                        else:
+                            continue
+
+    # Instantiate the XGB regressor model
+    XGBR = XGBRegressor(n_estimators=500, max_depth=5, eta=0.07, subsample=0.75, colsample_bytree=0.7, reg_lambda=0.4, reg_alpha=0.13,random_state=6410)
+
+    # Loop through mof names for all train datasets
+    # keep coresponding mofs as training data
+
+    x_test = design_space[X].to_numpy()
+    y_test = design_space[Y].to_numpy()
+
+    sorted_design_space    = design_space.sort_values(by='methane_uptake', ascending=False)
+    top_100_methane_uptake = sorted_design_space.head(100)
+
+    mean_accuracy_per_train_size = {key: {"percentages": [],
+                                          "accuracies": [],
+                                          "mean_percentage": None,
+                                          "mean_accuracy": None} 
+                                          for key in dataset_per_size.keys()}
+
+    # For each dataset size
+    for dataset_size in dataset_per_size.keys():
+
+        # For each instance of the particular dataset size
+        for instance in dataset_per_size[dataset_size].keys():
+            
+            current_materials_list = dataset_per_size[dataset_size][instance]["materials"].copy()
+
+            train_materials = design_space[design_space['type'].isin(current_materials_list)]
+
+            x_train  = train_materials[X].to_numpy()
+            y_train  = train_materials[Y].to_numpy()
+
+            XGBR.fit(x_train, y_train.ravel())
+
+            y_pred  = XGBR.predict(x_test)
+        
+            test_design_space = design_space.copy()
+            test_design_space['predicted_methane_uptake'] = y_pred
+
+            test_design_space = test_design_space.sort_values(by='predicted_methane_uptake', ascending=False)
+            predicted_top_100 = test_design_space.head(100)
+
+            # Percentage of actuall top100 materials predicted as such
+            predicted_percentage = len(set(top_100_methane_uptake['type']) & set(predicted_top_100['type'])) / 100
+
+            # Absolute difference in predicted and actual methane uptake
+            prediction_absolute_diff = np.subtract(top_100_methane_uptake['methane_uptake'].astype(float).tolist(),predicted_top_100['predicted_methane_uptake'].astype(float).tolist()).sum() / 100
+
+            mean_accuracy_per_train_size[dataset_size]["percentages"].append(predicted_percentage)
+            mean_accuracy_per_train_size[dataset_size]["accuracies"].append(prediction_absolute_diff)
+
+
+    for dataset_size in mean_accuracy_per_train_size.keys():
+        mean_accuracy_per_train_size[dataset_size]["mean_percentage"] = np.mean(mean_accuracy_per_train_size[dataset_size]["percentages"])
+        mean_accuracy_per_train_size[dataset_size]["mean_accuracy"] = np.mean(mean_accuracy_per_train_size[dataset_size]["accuracies"])
+
+    print("Mean precision percentage for dataset of size 25: " ,mean_accuracy_per_train_size[25]["mean_percentage"])
+    print("Mean accuracy for dataset of size 25: "             ,mean_accuracy_per_train_size[25]["mean_accuracy"])
+
+    print("Mean precision percentage for dataset of size 50: " ,mean_accuracy_per_train_size[50]["mean_percentage"])
+    print("Mean accuracy for dataset of size 50: "             ,mean_accuracy_per_train_size[50]["mean_accuracy"])
+
+    print("Mean precision percentage for dataset of size 100: ",mean_accuracy_per_train_size[100]["mean_percentage"])
+    print("Mean accuracy for dataset of size 100: "            ,mean_accuracy_per_train_size[100]["mean_accuracy"])
