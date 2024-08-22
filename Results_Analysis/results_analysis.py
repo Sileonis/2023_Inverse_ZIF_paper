@@ -89,6 +89,11 @@ if __name__ == "__main__":
                 utils.printEmptyLine()
                 
                 plot_error_to_dataset_size(path)
+            
+            case 12:
+                utils.printEmptyLine()
+
+                test_top100_mofs_prediction(path)
 
             case _:
                 pass
