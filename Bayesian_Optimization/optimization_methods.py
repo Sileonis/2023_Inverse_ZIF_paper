@@ -39,7 +39,7 @@ class BayesianOptimization(OptimizationFactory):
 
         """ Bayesian Optimization As A Method For Optimizing MAE of LogD 
             model:              The model to be optimized.
-            zifs :              The material data used during optimization.
+            materials :         The material data used during optimization.
             X_featureNames:     The names of the training features.
             Y_featureNames:     The names of the target features.
         """
@@ -305,7 +305,7 @@ class RandomOptimization(OptimizationFactory):
 
         """ Random Optimization As A Method For Optimizing MAE of LogD 
             model:              The model to be optimized.
-            zifs :              The data used during optimization.
+            materials :         The data used during optimization.
             X_featureNames:     The names of the training features.
             Y_featureNames:     The names of the target features.
         """
@@ -476,7 +476,7 @@ class SerialOptimization(OptimizationFactory):
 
         """ Serial Optimization As A Method For Optimizing MAE of LogD 
             model:              The model to be optimized.
-            zifs :              The data used during optimization.
+            materials :         The data used during optimization.
             X_featureNames:     The names of the training features.
             Y_featureNames:     The names of the target features.
         """
