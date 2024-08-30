@@ -22,6 +22,14 @@ def plot_logD_trainSize_perMethod(frame1, frame2 = None, frame3 = None, method1_
         marker_colors:  The colors that distinguish each method.
         """
 
+    def round_no_zero(number, decimals = 1):        
+        tmp_num = round(number,decimals)
+        while tmp_num == 0:
+            decimals += 1
+            tmp_num = round(number,decimals)
+
+        return round(number,decimals)
+
     # First Method
     x1 = frame1['sizeOfTrainingSet']
     y1 = frame1['averageError']
@@ -38,9 +46,10 @@ def plot_logD_trainSize_perMethod(frame1, frame2 = None, frame3 = None, method1_
     error1_left  = error1.loc[0:division_point]
     error1_right = error1.loc[division_point + 1:]
 
-    low_y1_right  = round(min(y1_right),1)
-    high_y1_right = round(max(y1_right) + 1, 1)
-    fourth_step   = round((high_y1_right - low_y1_right) / 4, 1)
+    min_max_diff  = round_no_zero(max(y1_right) - min(y1_right), 1)
+    low_y1_right  = round_no_zero(min(y1_right) - (min_max_diff / 2), 1)
+    high_y1_right = round_no_zero(max(y1_right) + (min_max_diff / 2), 1)
+    fourth_step   = round_no_zero((high_y1_right - low_y1_right) / 4, 1)
 
     plt.subplots(2,1)
 
@@ -70,14 +79,12 @@ def plot_logD_trainSize_perMethod(frame1, frame2 = None, frame3 = None, method1_
         error2_left  = error2.loc[0:division_point]
         error2_right = error2.loc[division_point + 1:]
 
-        low_y2_right  = round(min(y2_right),1)
-        
-        high_y2_right = round(max(y2_right) + 1, 1)
-
+        min_max_diff  = round_no_zero(max(y2_right) - min(y2_right), 1)
+        low_y2_right  = round_no_zero(min(y2_right) - (min_max_diff / 2) ,1) 
+        high_y2_right = round_no_zero(max(y2_right) + (min_max_diff / 2), 1)
         if high_y1_right > high_y2_right:
-            high_y2_right = high_y1_right
-        
-        fourth_step   = round((high_y2_right - low_y2_right) / 4, 1)
+            high_y2_right = high_y1_right        
+        fourth_step   = round_no_zero((high_y2_right - low_y2_right) / 4, 1)
 
         method1_v_method2_text = "\n".join((" ".join(("P-Value:     ", "{:.3e}".format(method1_v_method2_stats["pvalue"]))),
                                             " ".join(("Stat score:"  , "{:.3e}".format(method1_v_method2_stats["statistic"])))))
@@ -113,17 +120,14 @@ def plot_logD_trainSize_perMethod(frame1, frame2 = None, frame3 = None, method1_
         error3_left  = error3.loc[0:division_point]
         error3_right = error3.loc[division_point + 1:]
 
-        low_y3_right  = round(min(y3_right), 1)
-
-        high_y3_right = round(max(y3_right) + 1, 1)
-
+        min_max_diff  = round_no_zero(max(y3_right) - min(y3_right), 1)
+        low_y3_right  = round_no_zero(min(y3_right) - (min_max_diff / 2), 1)
+        high_y3_right = round_no_zero(max(y3_right) + (min_max_diff / 2), 1)
         if high_y1_right > high_y3_right:
             high_y3_right = high_y1_right
-
         if high_y2_right > high_y3_right:
             high_y3_right = high_y2_right
-
-        fourth_step   = round((high_y3_right - low_y3_right) / 4, 1)
+        fourth_step   = round_no_zero((high_y3_right - low_y3_right) / 4, 1)
 
         plt.subplot(2,1,1)
         plt.errorbar(x3_left, y3_left, yerr=error3_left, label=label3, ecolor='k', fmt='o', c=marker_colors[2], markersize=size, linewidth=line, markeredgecolor='k', markeredgewidth=edge)
