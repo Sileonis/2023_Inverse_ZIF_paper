@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--path',      help='The path to the results of the experiments.', default='./')
-    parser.add_argument('-t', '--train',     help='The path to the original training data.', default='../train_data/train_zifs_diffusivity/TrainData.xlsx')
+    parser.add_argument('-t', '--train',     help='The path to the original training data.', default='')
     parser.add_argument('-s', '--save',      help='The name of the directory containing round results.', default='saved_datasets/')
 
     parsed_args = parser.parse_args() # Actually parse
@@ -24,9 +24,15 @@ if __name__ == "__main__":
     train_path = parsed_args.train
     sortedDataSizeFreq, stopDataSizeFreqThres, stopDataSizeFreqPerf, mostFreqDataSize, thresholdReachingZifs, lowPerformanceZifs, full_result_thresh, total_runs, max_dataset_size = parse_data(path,saveName)
 
+    if train_path == '':        
+        if os.path.exists("./train_data"):
+            train_path = "./train_data/train_zifs_diffusivity/TrainData.xlsx"
+        elif os.path.exists("../train_data"):
+            train_path = "../train_data/train_zifs_diffusivity/TrainData.xlsx"
+        else:
+            raise Exception("Training data not found in default paths. Please provide a path to the original training data using the -t argument.")
 
     train_data = readData(train_path)
-    # train_data = pd.read_excel(train_path)
 
     action = 0
     while action != dialogs.getNumOfActions():
