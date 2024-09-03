@@ -67,8 +67,8 @@
             "args": ["-p", "../Experiments/10_Fold_Convergence/serial_run/"],
             "console": "integratedTerminal",
             "justMyCode": true,
-            "env": { "PYTHONPATH": "../"}
-            // "cwd": "./Results_Analysis",
+            // "env": { "PYTHONPATH": "../"}
+            "cwd": "${workspaceFolder}",
         }
     ]
 }
