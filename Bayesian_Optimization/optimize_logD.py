@@ -15,6 +15,7 @@ from plot_optimization import plot_logD_trainSize_perMethod
 
 import os
 import sys
+sys.path.insert(0,os.curdir)
 sys.path.insert(0,os.pardir)
 from ga_inverse import readData
 

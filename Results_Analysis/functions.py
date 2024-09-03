@@ -15,7 +15,9 @@ from colorama import init, Fore, Style
 
 import os
 import sys
+sys.path.insert(0,os.path.join(os.curdir,"Bayesian_Optimization"))
 sys.path.insert(0,os.path.join(os.pardir,"Bayesian_Optimization"))
+
 from optimize_logD import data_preparation
 from Bayesian_Optimization import plot_optimization
 
