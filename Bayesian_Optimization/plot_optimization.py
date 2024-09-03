@@ -22,13 +22,14 @@ def plot_logD_trainSize_perMethod(frame1, frame2 = None, frame3 = None, method1_
         marker_colors:  The colors that distinguish each method.
         """
 
-    def round_no_zero(number, decimals = 1):        
+    def round_no_zero(number, decimals = 1):          
+        
         tmp_num = round(number,decimals)
         while tmp_num == 0:
             decimals += 1
             tmp_num = round(number,decimals)
 
-        return round(number,decimals)
+        return tmp_num
 
     # First Method
     x1 = frame1['sizeOfTrainingSet']
@@ -46,9 +47,12 @@ def plot_logD_trainSize_perMethod(frame1, frame2 = None, frame3 = None, method1_
     error1_left  = error1.loc[0:division_point]
     error1_right = error1.loc[division_point + 1:]
 
-    min_max_diff  = round_no_zero(max(y1_right) - min(y1_right), 1)
-    low_y1_right  = round_no_zero(min(y1_right) - (min_max_diff / 2), 1)
-    high_y1_right = round_no_zero(max(y1_right) + (min_max_diff / 2), 1)
+    min_max_diff          = round_no_zero(max(y1_right) - min(y1_right), 1)
+    half_min_max_diff     = min_max_diff / 2
+    min_max_diff_decimals = len(str(half_min_max_diff).split('.')[1])
+
+    low_y1_right  = round_no_zero(min(y1_right) - (half_min_max_diff), min_max_diff_decimals)
+    high_y1_right = round_no_zero(max(y1_right) + (half_min_max_diff), min_max_diff_decimals)
     fourth_step   = round_no_zero((high_y1_right - low_y1_right) / 4, 1)
 
     plt.subplots(2,1)
@@ -79,9 +83,12 @@ def plot_logD_trainSize_perMethod(frame1, frame2 = None, frame3 = None, method1_
         error2_left  = error2.loc[0:division_point]
         error2_right = error2.loc[division_point + 1:]
 
-        min_max_diff  = round_no_zero(max(y2_right) - min(y2_right), 1)
-        low_y2_right  = round_no_zero(min(y2_right) - (min_max_diff / 2) ,1) 
-        high_y2_right = round_no_zero(max(y2_right) + (min_max_diff / 2), 1)
+        min_max_diff          = round_no_zero(max(y2_right) - min(y2_right), 1)
+        half_min_max_diff     = min_max_diff / 2
+        min_max_diff_decimals = len(str(half_min_max_diff).split('.')[1])
+
+        low_y2_right  = round_no_zero(min(y2_right) - (half_min_max_diff) ,min_max_diff_decimals) 
+        high_y2_right = round_no_zero(max(y2_right) + (half_min_max_diff), min_max_diff_decimals)
         if high_y1_right > high_y2_right:
             high_y2_right = high_y1_right        
         fourth_step   = round_no_zero((high_y2_right - low_y2_right) / 4, 1)
@@ -120,9 +127,12 @@ def plot_logD_trainSize_perMethod(frame1, frame2 = None, frame3 = None, method1_
         error3_left  = error3.loc[0:division_point]
         error3_right = error3.loc[division_point + 1:]
 
-        min_max_diff  = round_no_zero(max(y3_right) - min(y3_right), 1)
-        low_y3_right  = round_no_zero(min(y3_right) - (min_max_diff / 2), 1)
-        high_y3_right = round_no_zero(max(y3_right) + (min_max_diff / 2), 1)
+        min_max_diff          = round_no_zero(max(y3_right) - min(y3_right), 1)
+        half_min_max_diff     = min_max_diff / 2
+        min_max_diff_decimals = len(str(half_min_max_diff).split('.')[1])
+
+        low_y3_right  = round_no_zero(min(y3_right) - (half_min_max_diff), min_max_diff_decimals)
+        high_y3_right = round_no_zero(max(y3_right) + (half_min_max_diff), min_max_diff_decimals)
         if high_y1_right > high_y3_right:
             high_y3_right = high_y1_right
         if high_y2_right > high_y3_right:
