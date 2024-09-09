@@ -136,7 +136,7 @@ if __name__ == "__main__":
     designspace_thres = int(parsed_args.number)
     experiments_num   = int(parsed_args.loop)
 
-    if dataType not in ["zifs_diffusivity", "co2", "o2_n2", "methane"]:
+    if dataType not in ["zifs_diffusivity", "co2", "o2_n2", "o2", "n2", "methane"]:
         raise Exception("Invalid research data type.")
 
     # Create a directory to store the results of the experiments
