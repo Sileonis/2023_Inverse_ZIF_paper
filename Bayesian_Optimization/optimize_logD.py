@@ -70,6 +70,29 @@ def data_preparation(sourceFile=None, research_data="zifs_diffusivity") -> list:
              'electronegtive-to-total ratio', ' weighted electronegativity per atom', 
              ' nitrogen to oxygen ', 'mass',	'ascentricF',	'diameter',	'kdiameter']
 
+    elif research_data == "o2":
+        data_from_file = pd.read_csv(sourceFile)
+
+        Y = ["logD_O2"]
+        X = ['LCD',	'PLD',	'LFPD',	'Volume',	'ASA_m2_g',	
+             'ASA_m2_cm3',	'NASA_m2_g', 'NASA_m2_cm3',	
+             'AV_VF',	'AV_cm3_g',	'NAV_cm3_g', ' H', 'C',	'N', 'metal type', 
+             ' total degree of unsaturation', 'metalic percentage',	' oxygetn-to-metal ratio',	
+             'electronegtive-to-total ratio', ' weighted electronegativity per atom', 
+             ' nitrogen to oxygen ']
+
+    elif research_data == "n2":
+        data_from_file = pd.read_csv(sourceFile)
+
+        Y = ["logD_N2"]
+        X = ['LCD',	'PLD',	'LFPD',	'Volume',	'ASA_m2_g',	
+             'ASA_m2_cm3',	'NASA_m2_g', 'NASA_m2_cm3',	
+             'AV_VF',	'AV_cm3_g',	'NAV_cm3_g', ' H', 'C',	'N', 'metal type', 
+             ' total degree of unsaturation', 'metalic percentage',	' oxygetn-to-metal ratio',	
+             'electronegtive-to-total ratio', ' weighted electronegativity per atom', 
+             ' nitrogen to oxygen ']
+
+
     else:
         data_from_file = pd.read_csv(sourceFile)
         data_from_file = data_from_file.rename(columns={' absolute methane uptake high P [v STP/v]':'methane_uptake', ' name':'type'})        
